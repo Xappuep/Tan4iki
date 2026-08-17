@@ -37,6 +37,15 @@
           <div class="hud-label">Статус</div>
           <div id="status" class="hud-status">Готов</div>
         </div>
+        <div class="hud-block">
+          <div class="hud-label">Уровень танка</div>
+          <div id="tank-level" class="hud-value">1</div>
+          <div id="tank-bars" class="tank-bars">□ □ □</div>
+        </div>
+        <div class="hud-block hud-effects-block">
+          <div class="hud-label">Эффекты</div>
+          <div id="effects" class="hud-effects">Нет</div>
+        </div>
       </aside>
     </div>
 
@@ -49,13 +58,13 @@
         <div class="help">
           <h3>Управление</h3>
           <p>W — вверх</p>
-          <p>A — вниз</p>
-          <p>S — влево</p>
+          <p>A — влево</p>
+          <p>S — вниз</p>
           <p>D — вправо</p>
           <p>Пробел — выстрел</p>
           <p>На телефоне — экранные кнопки</p>
           <h3>Цель</h3>
-          <p>Защитите штаб внизу карты и уничтожьте все танки противника. Кирпич разрушается, сталь держит обычный снаряд. Лес скрывает технику, вода непроходима, лёд ускоряет ход.</p>
+          <p>После уничтожения врагов иногда выпадают бонусы: мощь, щит, скорость, жизнь, ремонт штаба, стужа и бомба.</p>
         </div>
       </div>
     </div>
@@ -89,6 +98,7 @@
   <script src="src/bullet.js"></script>
   <script src="src/player.js"></script>
   <script src="src/enemy.js"></script>
+  <script src="src/bonuses.js"></script>
   <script src="src/render.js"></script>
   <script src="src/game.js"></script>
   <script src="src/main.js"></script>

@@ -178,6 +178,24 @@ SR.Audio = {
     setTimeout(function () { self.tone(740, 0.1, "square", 0.07); }, 80);
   },
 
+  upgrade: function () {
+    this.tone(330, 0.08, "square", 0.08);
+    const self = this;
+    setTimeout(function () { self.tone(415, 0.08, "square", 0.08); }, 70);
+    setTimeout(function () { self.tone(523, 0.08, "square", 0.09); }, 140);
+    setTimeout(function () { self.tone(659, 0.16, "square", 0.09); }, 210);
+  },
+
+  freeze: function () {
+    this.tone(880, 0.12, "triangle", 0.06, 420);
+    this.tone(1320, 0.18, "square", 0.04);
+  },
+
+  bomb: function () {
+    this.noise(0.34, 0.18);
+    this.tone(70, 0.36, "sawtooth", 0.12, 36);
+  },
+
   win: function () {
     this.setEngine(false);
     this.tone(330, 0.14, "square", 0.08);

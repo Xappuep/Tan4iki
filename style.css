@@ -103,6 +103,20 @@ body {
   color: var(--ok);
 }
 
+.tank-bars {
+  margin-top: 4px;
+  font-size: 18px;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+
+.hud-effects {
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--ink);
+  min-height: 20px;
+}
+
 .hud-lives {
   display: flex;
   gap: 6px;

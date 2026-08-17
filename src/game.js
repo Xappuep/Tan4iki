@@ -28,6 +28,11 @@ SR.Game.prototype.resetWorld = function () {
   this.enemySerial = 0;
   this.ended = false;
   this.status = "Бой";
+  this.tankLevel = 1;
+  this.freezeLeft = 0;
+  this.baseMaxHp = 2;
+  this.baseHp = 2;
+  this.floats = [];
 };
 
 SR.Game.prototype.buildQueue = function () {
@@ -104,11 +109,14 @@ SR.Game.prototype.placeEnemy = function (kind) {
 
 SR.Game.prototype.tryShoot = function (tank) {
   if (tank.cooldown > 0 || tank.dead) return;
+  const maxShots = tank.maxBullets || 1;
+  let owned = 0;
   for (let i = 0; i < this.bullets.length; i++) {
-    if (this.bullets[i].ownerId === tank.id) return;
+    if (this.bullets[i].ownerId === tank.id) owned += 1;
   }
+  if (owned >= maxShots) return;
   this.bullets.push(SR.spawnBulletFromTank(tank));
-  tank.cooldown = tank.id === "player" ? 280 : tank.shotDelay;
+  tank.cooldown = tank.id === "player" ? (tank.shotCooldown || 280) : tank.shotDelay;
   SR.Audio.shot();
 };
 
@@ -124,7 +132,7 @@ SR.Game.prototype.update = function (dt) {
     this.updateHud();
     return;
   }
-  this.collectBonuses();
+  SR.Bonuses.update(this, dt);
 
   for (let i = this.explosions.length - 1; i >= 0; i--) {
     this.explosions[i].t += dt;
@@ -181,7 +189,9 @@ SR.Game.prototype.hitTiles = function (bullet) {
   } else if (cell.type === SR.TILE.BASE) {
     bullet.alive = false;
     this.addExplosion(cx, cy, true);
-    this.finish("lose", "Штаб уничтожен");
+    this.baseHp -= 1;
+    SR.Audio.hit();
+    if (this.baseHp <= 0) this.finish("lose", "Штаб уничтожен");
   }
 };
 
@@ -202,9 +212,16 @@ SR.Game.prototype.hitTanks = function (bullet) {
       SR.Audio.hit();
       return;
     }
-    tank.hp -= 1;
+    if (tank.shieldCharges > 0) {
+      tank.shieldCharges -= 1;
+      tank.flash = 180;
+      SR.Audio.hit();
+      return;
+    }
+    tank.hp -= (bullet.damage || 1);
     SR.Audio.hit();
     if (tank.hp <= 0) this.destroyTank(tank);
+    else if (tank.id === "player") tank.invuln = 450;
     return;
   }
 };
@@ -235,36 +252,7 @@ SR.Game.prototype.destroyTank = function (tank) {
   }
   this.remaining -= 1;
   this.score += tank.score;
-  if (Math.random() < 0.28) this.dropBonus(cx, cy);
-};
-
-SR.Game.prototype.dropBonus = function (x, y) {
-  const types = [
-    { type: "shot", mark: "У" },
-    { type: "shield", mark: "Щ" },
-    { type: "life", mark: "Ж" }
-  ];
-  const pick = types[Math.floor(Math.random() * types.length)];
-  this.bonuses.push({
-    x: Math.max(8, Math.min(x - 8, SR.CONST.COLS * SR.CONST.TILE - 24)),
-    y: Math.max(8, Math.min(y - 8, SR.CONST.ROWS * SR.CONST.TILE - 24)),
-    type: pick.type,
-    mark: pick.mark
-  });
-};
-
-SR.Game.prototype.collectBonuses = function () {
-  if (!this.player || this.player.dead) return;
-  const body = SR.Collision.tankRect(this.player.x, this.player.y);
-  for (let i = this.bonuses.length - 1; i >= 0; i--) {
-    const item = this.bonuses[i];
-    if (!SR.Collision.rects(body, { x: item.x, y: item.y, w: 16, h: 16 })) continue;
-    if (item.type === "shot") this.player.strongShot = 12000;
-    if (item.type === "shield") this.player.shield = 6000;
-    if (item.type === "life") this.lives = Math.min(5, this.lives + 1);
-    this.bonuses.splice(i, 1);
-    SR.Audio.bonus();
-  }
+  SR.Bonuses.tryDrop(this, cx, cy);
 };
 
 SR.Game.prototype.addExplosion = function (x, y, big) {
@@ -319,13 +307,33 @@ SR.Game.prototype.updateHud = function () {
     pip.className = "life-pip";
     this.hud.lives.appendChild(pip);
   }
+  const level = this.tankLevel || 1;
+  if (this.hud.tankLevel) this.hud.tankLevel.textContent = String(level);
+  if (this.hud.tankBars) {
+    const cells = [];
+    for (let i = 1; i <= 3; i++) cells.push(i <= level ? "■" : "□");
+    this.hud.tankBars.textContent = cells.join(" ");
+  }
+  if (this.hud.effects) {
+    const bits = [];
+    const p = this.player;
+    if (p && p.shieldCharges > 0) bits.push("Щит ×" + p.shieldCharges);
+    if (p && p.speedBoost > 0) bits.push("Скорость " + Math.ceil(p.speedBoost / 1000) + "с");
+    if (this.freezeLeft > 0) bits.push("Стужа " + Math.ceil(this.freezeLeft / 1000) + "с");
+    if (this.baseHp < this.baseMaxHp && this.baseHp > 0) bits.push("Штаб повреждён");
+    this.hud.effects.textContent = bits.length ? bits.join(" · ") : "Нет";
+  }
 };
 
 SR.Game.prototype.frame = function (time) {
   const dt = this.lastTime ? Math.min(32, time - this.lastTime) : 16;
   this.lastTime = time;
-  if (this.state === "playing") this.update(dt);
-  SR.Render.draw(this.ctx, this, time);
+  try {
+    if (this.state === "playing") this.update(dt);
+    SR.Render.draw(this.ctx, this, time);
+  } catch (err) {
+    console.error(err);
+  }
   this.raf = requestAnimationFrame(this.frame.bind(this));
 };
 

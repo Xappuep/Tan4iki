@@ -6,28 +6,49 @@ SR.Player = function (game, x, y) {
   this.x = x;
   this.y = y;
   this.dir = 0;
+  this.baseSpeed = 96;
   this.speed = 96;
   this.dead = false;
   this.hp = 1;
+  this.maxHp = 1;
   this.invuln = 2000;
-  this.shield = 0;
-  this.strongShot = 0;
+  this.shieldCharges = 0;
+  this.speedBoost = 0;
+  this.flash = 0;
   this.cooldown = 0;
+  this.shotCooldown = 280;
+  this.maxBullets = 1;
+  this.bulletSpeed = 280;
+  this.bulletDamage = 1;
   this.moved = false;
   this.slideDir = 0;
+  this.applyLevel(game.tankLevel || 1);
+  this.hp = this.maxHp;
+};
+
+SR.Player.prototype.applyLevel = function (level) {
+  this.tankLevel = Math.max(1, Math.min(3, level || 1));
+  this.maxBullets = this.tankLevel >= 3 ? 2 : 1;
+  this.shotCooldown = this.tankLevel >= 2 ? 190 : 280;
+  this.bulletSpeed = this.tankLevel >= 2 ? 380 : 280;
+  this.bulletDamage = this.tankLevel >= 3 ? 2 : 1;
+  this.maxHp = this.tankLevel >= 3 ? 2 : 1;
+  if (this.hp > this.maxHp) this.hp = this.maxHp;
+  if (this.hp < 1) this.hp = this.maxHp;
 };
 
 SR.Player.prototype.isProtected = function () {
-  return this.invuln > 0 || this.shield > 0;
+  return this.invuln > 0;
 };
 
 SR.Player.prototype.update = function (dt, input) {
   if (this.dead) return;
   this.invuln = Math.max(0, this.invuln - dt);
-  this.shield = Math.max(0, this.shield - dt);
-  this.strongShot = Math.max(0, this.strongShot - dt);
+  this.speedBoost = Math.max(0, this.speedBoost - dt);
+  this.flash = Math.max(0, this.flash - dt);
   this.cooldown = Math.max(0, this.cooldown - dt);
   this.moved = false;
+  this.speed = this.baseSpeed * (this.speedBoost > 0 ? 1.25 : 1);
 
   const onIce = SR.Collision.onTile(this.game.grid, this, SR.TILE.ICE);
   let dist = this.speed * dt / 1000;

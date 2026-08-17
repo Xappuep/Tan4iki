@@ -12,7 +12,10 @@ SR.main = function () {
     best: hudBest,
     lives: document.getElementById("lives"),
     enemies: document.getElementById("enemies"),
-    status: document.getElementById("status")
+    status: document.getElementById("status"),
+    tankLevel: document.getElementById("tank-level"),
+    tankBars: document.getElementById("tank-bars"),
+    effects: document.getElementById("effects")
   });
 
   function showBest() {
@@ -57,47 +60,73 @@ SR.main = function () {
   document.getElementById("btn-again").addEventListener("click", startGame);
   document.getElementById("btn-menu").addEventListener("click", showMenu);
 
-  const dirStack = [];
-  const keyMap = {
+  const held = [];
+  const tokenDir = {
     KeyW: 0,
-    KeyA: 2,
-    KeyS: 3,
+    KeyA: 3,
+    KeyS: 2,
     KeyD: 1,
     ArrowUp: 0,
     ArrowDown: 2,
     ArrowLeft: 3,
-    ArrowRight: 1
+    ArrowRight: 1,
+    pad_up: 0,
+    pad_down: 2,
+    pad_left: 3,
+    pad_right: 1
   };
 
+  function tokenFromEvent(event) {
+    if (event.code && tokenDir[event.code] !== undefined) return event.code;
+    const key = (event.key || "").toLowerCase();
+    if (key === "w" || key === "ц") return "KeyW";
+    if (key === "a" || key === "ф") return "KeyA";
+    if (key === "s" || key === "ы") return "KeyS";
+    if (key === "d" || key === "в") return "KeyD";
+    if (key === "arrowup") return "ArrowUp";
+    if (key === "arrowdown") return "ArrowDown";
+    if (key === "arrowleft") return "ArrowLeft";
+    if (key === "arrowright") return "ArrowRight";
+    return null;
+  }
+
   function syncDir() {
-    game.input.dir = dirStack.length ? dirStack[dirStack.length - 1] : null;
+    game.input.dir = held.length ? tokenDir[held[held.length - 1]] : null;
+  }
+
+  function pressToken(token) {
+    if (!token || tokenDir[token] === undefined) return;
+    const idx = held.indexOf(token);
+    if (idx >= 0) held.splice(idx, 1);
+    held.push(token);
+    syncDir();
+  }
+
+  function releaseToken(token) {
+    if (!token) return;
+    const idx = held.indexOf(token);
+    if (idx >= 0) held.splice(idx, 1);
+    syncDir();
   }
 
   window.addEventListener("keydown", function (event) {
-    if (event.code === "Space") {
+    if (event.code === "Space" || event.key === " ") {
       event.preventDefault();
       game.input.fire = true;
       return;
     }
-    if (!(event.code in keyMap)) return;
+    const token = tokenFromEvent(event);
+    if (!token) return;
     event.preventDefault();
-    const dir = keyMap[event.code];
-    const idx = dirStack.indexOf(dir);
-    if (idx >= 0) dirStack.splice(idx, 1);
-    dirStack.push(dir);
-    syncDir();
+    if (!event.repeat) pressToken(token);
   });
 
   window.addEventListener("keyup", function (event) {
-    if (event.code === "Space") {
+    if (event.code === "Space" || event.key === " ") {
       game.input.fire = false;
       return;
     }
-    if (!(event.code in keyMap)) return;
-    const dir = keyMap[event.code];
-    const idx = dirStack.indexOf(dir);
-    if (idx >= 0) dirStack.splice(idx, 1);
-    syncDir();
+    releaseToken(tokenFromEvent(event));
   });
 
   function bindHold(el, on, off) {
@@ -117,21 +146,11 @@ SR.main = function () {
     el.addEventListener("pointercancel", stop);
   }
 
-  const padDirs = { up: 0, down: 2, left: 3, right: 1 };
   const pads = document.querySelectorAll(".pad");
   for (let i = 0; i < pads.length; i++) {
     (function (btn) {
-      const dir = padDirs[btn.getAttribute("data-dir")];
-      bindHold(btn, function () {
-        const idx = dirStack.indexOf(dir);
-        if (idx >= 0) dirStack.splice(idx, 1);
-        dirStack.push(dir);
-        syncDir();
-      }, function () {
-        const idx = dirStack.indexOf(dir);
-        if (idx >= 0) dirStack.splice(idx, 1);
-        syncDir();
-      });
+      const token = "pad_" + btn.getAttribute("data-dir");
+      bindHold(btn, function () { pressToken(token); }, function () { releaseToken(token); });
     })(pads[i]);
   }
 

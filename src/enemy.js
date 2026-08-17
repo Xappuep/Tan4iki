@@ -71,6 +71,7 @@ SR.Enemy.prototype.update = function (dt) {
   if (this.dead) return;
   this.invuln = Math.max(0, this.invuln - dt);
   this.cooldown = Math.max(0, this.cooldown - dt);
+  if (this.game.freezeLeft > 0) return;
   this.thinkIn -= dt;
 
   const player = this.game.player && !this.game.player.dead ? this.game.player : null;
