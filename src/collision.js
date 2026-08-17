@@ -23,7 +23,11 @@ SR.Collision = {
       for (let c = left; c <= right; c++) {
         if (!SR.Map.inBounds(c, r)) return true;
         const type = grid[r][c];
-        if (type === T.BRICK || type === T.STEEL || type === T.WATER || type === T.BASE) {
+        if (type === T.BRICK) {
+          if (SR.Brick.rectBlocked(grid, c, r, x, y, size, size)) return true;
+          continue;
+        }
+        if (type === T.STEEL || type === T.WATER || type === T.BASE) {
           return true;
         }
       }
@@ -110,16 +114,20 @@ SR.Collision = {
   lineClear: function (grid, c1, r1, c2, r2) {
     const T = SR.TILE;
     if (c1 !== c2 && r1 !== r2) return false;
-    const dc = Math.sign(c2 - c1);
-    const dr = Math.sign(r2 - r1);
-    let c = c1;
-    let r = r1;
-    while (c !== c2 || r !== r2) {
-      c += dc;
-      r += dr;
-      if (!SR.Map.inBounds(c, r)) return false;
-      const type = grid[r][c];
-      if (type === T.BRICK || type === T.STEEL) return false;
+    const t = SR.CONST.TILE;
+    const x1 = c1 * t + t / 2;
+    const y1 = r1 * t + t / 2;
+    const x2 = c2 * t + t / 2;
+    const y2 = r2 * t + t / 2;
+    const dist = Math.abs(x2 - x1) + Math.abs(y2 - y1);
+    const steps = Math.max(1, Math.ceil(dist / 8));
+    for (let i = 1; i <= steps; i++) {
+      const x = x1 + (x2 - x1) * i / steps;
+      const y = y1 + (y2 - y1) * i / steps;
+      const cell = SR.Map.tileAtPixel(grid, x, y);
+      if (!cell) return false;
+      if (cell.type === T.STEEL) return false;
+      if (cell.type === T.BRICK && SR.Brick.solidAt(grid, x, y)) return false;
     }
     return true;
   }

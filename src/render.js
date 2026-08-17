@@ -98,33 +98,13 @@ SR.Render = {
           }
           continue;
         }
-        if (type === SR.TILE.BRICK) this.drawBrick(ctx, x, y);
+        if (type === SR.TILE.BRICK) SR.Brick.drawCell(ctx, grid, c, r);
         else if (type === SR.TILE.STEEL) this.drawSteel(ctx, x, y);
         else if (type === SR.TILE.WATER) this.drawWater(ctx, x, y, time);
         else if (type === SR.TILE.ICE) this.drawIce(ctx, x, y);
         else if (type === SR.TILE.BASE) this.drawBase(ctx, x, y, time, game);
       }
     }
-  },
-
-  drawBrick: function (ctx, x, y) {
-    ctx.fillStyle = SR.PALETTE.mortar;
-    ctx.fillRect(x, y, 32, 32);
-    ctx.fillStyle = SR.PALETTE.brick;
-    ctx.fillRect(x, y, 15, 15);
-    ctx.fillRect(x + 17, y, 15, 15);
-    ctx.fillRect(x, y + 17, 15, 15);
-    ctx.fillRect(x + 17, y + 17, 15, 15);
-    ctx.fillStyle = SR.PALETTE.brickLight;
-    ctx.fillRect(x + 1, y + 1, 8, 3);
-    ctx.fillRect(x + 18, y + 1, 8, 3);
-    ctx.fillRect(x + 1, y + 18, 8, 3);
-    ctx.fillRect(x + 18, y + 18, 8, 3);
-    ctx.fillStyle = SR.PALETTE.brickDark;
-    ctx.fillRect(x + 11, y + 11, 4, 4);
-    ctx.fillRect(x + 28, y + 11, 4, 4);
-    ctx.fillRect(x + 11, y + 28, 4, 4);
-    ctx.fillRect(x + 28, y + 28, 4, 4);
   },
 
   drawSteel: function (ctx, x, y) {
@@ -516,6 +496,11 @@ SR.Render = {
     for (let i = 0; i < dust.length; i++) {
       const d = dust[i];
       const k = 1 - d.t / d.duration;
+      if (d.brick) {
+        ctx.fillStyle = k > 0.45 ? "#6a4a28" : "#4a341c";
+        ctx.fillRect(Math.round(d.x), Math.round(d.y), 2, 2);
+        continue;
+      }
       ctx.fillStyle = d.turbo ? "rgba(210, 190, 120, " + (0.45 * k) + ")" : "rgba(40, 36, 24, " + (0.4 * k) + ")";
       ctx.fillRect(Math.round(d.x), Math.round(d.y), d.turbo ? 3 : 2, d.turbo ? 3 : 2);
     }

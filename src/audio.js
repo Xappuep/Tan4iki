@@ -811,12 +811,16 @@ SR.Audio = {
 
   hit: function (kind) {
     kind = kind || "enemy";
-    if (!this.canSfx(kind === "player" || kind === "base" ? 2 : 0)) return;
+    if (!this.canSfx(kind === "player" || kind === "base" || kind === "brickBreak" ? 2 : (kind === "brick" ? 1 : 0))) return;
     this.book(0.14);
     const t = this.now();
     if (kind === "brick") {
-      this.noiseTo(t, 0.08, 0.05, this.fxGain, 1600);
-      this.toneTo(210, "square", t, 0.04, 0.03, this.fxGain, 90);
+      this.noiseTo(t, 0.05, 0.04, this.fxGain, 1900);
+      this.toneTo(260, "square", t, 0.03, 0.022, this.fxGain, 110);
+    } else if (kind === "brickBreak") {
+      this.noiseTo(t, 0.1, 0.07, this.fxGain, 900);
+      this.toneTo(150, "square", t, 0.06, 0.035, this.fxGain, 55);
+      this.toneTo(90, "triangle", t + 0.03, 0.05, 0.02, this.fxGain, 40);
     } else if (kind === "steel") {
       this.toneTo(620, "triangle", t, 0.12, 0.045, this.fxGain, 240);
       this.noiseTo(t, 0.04, 0.03, this.fxGain, 2400, "highpass");

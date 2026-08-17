@@ -226,25 +226,27 @@ SR.Game.prototype.resolveBullets = function () {
 };
 
 SR.Game.prototype.hitTiles = function (bullet) {
-  const cx = bullet.x + bullet.size / 2;
-  const cy = bullet.y + bullet.size / 2;
+  const lead = SR.Brick.leadPoint(bullet);
+  const brickHit = SR.Brick.pickHit(this.grid, bullet);
+  if (brickHit) {
+    const result = SR.Brick.damage(this.grid, brickHit.c, brickHit.r, brickHit.q, bullet.damage || 1);
+    SR.Brick.addImpactFx(this, brickHit.x, brickHit.y, result.destroyed);
+    SR.Audio.hit(result.destroyed ? "brickBreak" : "brick");
+    bullet.alive = false;
+    return;
+  }
+  const cx = lead.x;
+  const cy = lead.y;
   const cell = SR.Map.tileAtPixel(this.grid, cx, cy);
   if (!cell) return;
+  if (cell.type === SR.TILE.BRICK) return;
   if (cell.type === SR.TILE.WATER && !bullet.splashed) {
     bullet.splashed = true;
     this.addSpark(cx, cy, "water");
     SR.Audio.hit("water");
     return;
   }
-    if (cell.type === SR.TILE.BRICK) {
-      this.grid[cell.r][cell.c] = SR.TILE.EMPTY;
-      this.addExplosion(cx, cy, false, "brick");
-      this.addSpark(cx, cy, "brick");
-      SR.Audio.hit("brick");
-      // Уровень 4: снаряд может пройти сквозь один кирпич, не меняя размер коллизии танка.
-      if (bullet.pierce > 0) bullet.pierce -= 1;
-      else bullet.alive = false;
-  } else if (cell.type === SR.TILE.STEEL) {
+  if (cell.type === SR.TILE.STEEL) {
     if (bullet.strong) {
       this.grid[cell.r][cell.c] = SR.TILE.EMPTY;
       this.addExplosion(cx, cy, false, "steel");

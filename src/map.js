@@ -43,7 +43,7 @@ SR.Map = {
     const I = T.ICE;
     const X = T.BASE;
 
-    return [
+    const grid = [
       [E, E, B, E, E, E, E, E, E, E, B, E, E],
       [E, E, B, E, B, B, E, B, B, E, B, E, E],
       [B, B, E, E, B, E, S, E, B, E, E, B, B],
@@ -58,12 +58,16 @@ SR.Map = {
       [E, E, B, E, B, B, B, B, B, E, B, E, E],
       [E, E, E, E, B, B, X, B, B, E, E, E, E]
     ];
+    if (SR.Brick) SR.Brick.attach(grid);
+    return grid;
   },
 
   clone: function (grid) {
-    return grid.map(function (row) {
+    const next = grid.map(function (row) {
       return row.slice();
     });
+    if (SR.Brick) SR.Brick.copy(grid, next);
+    return next;
   },
 
   inBounds: function (c, r) {
