@@ -24,14 +24,25 @@ SR.Collision = {
         if (!SR.Map.inBounds(c, r)) return true;
         const type = grid[r][c];
         if (type === T.BRICK) {
-          if (SR.Brick.rectBlocked(grid, c, r, x, y, size, size)) return true;
+          let bx = x;
+          let by = y;
+          let bw = size;
+          let bh = size;
+          if (tank && tank.id === "player") {
+            const inset = 3;
+            bx += inset;
+            by += inset;
+            bw -= inset * 2;
+            bh -= inset * 2;
+          }
+          if (SR.Brick.rectBlocked(grid, c, r, bx, by, bw, bh)) return true;
           continue;
         }
         if (type === T.STEEL || type === T.WATER || type === T.BASE) {
           return true;
         }
         if (tank && tank.id === "player" && tank.game && SR.Campaign && SR.Campaign.isSpawnCell(tank.game, c, r)) {
-          return true;
+          if (tank.game.spawnCellOccupied(c, r)) return true;
         }
       }
     }

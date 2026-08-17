@@ -190,6 +190,17 @@ SR.Game.prototype.spawnPlayer = function () {
   this.respawnWait = 0;
 };
 
+SR.Game.prototype.spawnCellOccupied = function (c, r) {
+  if (this.spawnWarn && this.spawnWarn.c === c && this.spawnWarn.r === r) return true;
+  for (let i = 0; i < this.enemies.length; i++) {
+    const enemy = this.enemies[i];
+    if (enemy.dead) continue;
+    const cell = enemy.cell();
+    if (cell.c === c && cell.r === r) return true;
+  }
+  return false;
+};
+
 SR.Game.prototype.pickSpawnCell = function () {
   const points = this.enemySpawns || [];
   if (!points.length) return null;

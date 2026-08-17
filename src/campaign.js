@@ -134,14 +134,12 @@ SR.Campaign = {
     return false;
   },
 
-  nextInterval: function (index) {
-    if (index <= 1) return 8000 + Math.random() * 2000;
-    if (index <= 3) return 6500 + Math.random() * 2000;
-    return 5000 + Math.random() * 2000;
+  nextInterval: function () {
+    return 3000;
   },
 
   firstDelay: function () {
-    return 5000 + Math.random() * 2000;
+    return 3000;
   }
 };
 

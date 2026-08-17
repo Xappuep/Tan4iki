@@ -17,8 +17,9 @@ SR.Bonuses = {
   SPEED_MS: 12000,
   FREEZE_MS: 6000,
   EMP_SLOW_MS: 3000,
-  CHANCE: 0.22,
-  FIRST_AFTER: 3,
+  CHANCE: 0.48,
+  FIRST_AFTER: 1,
+  POWER_BIAS: 0.45,
   MAX_SCORE_POWER: 500,
   MAX_SCORE_REPAIR: 300,
   MAX_SCORE_LIFE: 500,
@@ -69,11 +70,17 @@ SR.Bonuses = {
 
   pickType: function (game) {
     const hist = game.bonusHistory;
-    let type = this.TYPES[Math.floor(Math.random() * this.TYPES.length)];
-    // Не даём трём одинаковым бонусам идти подряд, если есть другие типы.
+    const level = game.tankLevel || 1;
+    let type;
+    if (level < 4 && Math.random() < this.POWER_BIAS) {
+      type = "power";
+    } else {
+      type = this.TYPES[Math.floor(Math.random() * this.TYPES.length)];
+    }
     if (hist.length >= 2 && hist[hist.length - 1] === hist[hist.length - 2]) {
       for (let n = 0; n < 10; n++) {
-        type = this.TYPES[Math.floor(Math.random() * this.TYPES.length)];
+        if (level < 4 && Math.random() < this.POWER_BIAS) type = "power";
+        else type = this.TYPES[Math.floor(Math.random() * this.TYPES.length)];
         if (type !== hist[hist.length - 1]) break;
       }
     }

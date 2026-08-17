@@ -316,8 +316,8 @@ SR.Render = {
       ctx.beginPath();
       for (let i = 0; i < 6; i++) {
         const a = Math.PI / 6 + i * Math.PI / 3;
-        const px = cx + Math.cos(a) * 18;
-        const py = cy + Math.sin(a) * 18;
+        const px = cx + Math.cos(a) * 13;
+        const py = cy + Math.sin(a) * 13;
         if (i === 0) ctx.moveTo(px, py);
         else ctx.lineTo(px, py);
       }
