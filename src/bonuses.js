@@ -174,7 +174,7 @@ SR.Bonuses = {
     if (type === SR.BONUS.LIFE) {
       if (game.lives >= 5) game.score += this.MAX_SCORE_LIFE;
       else game.lives += 1;
-      SR.Audio.bonus();
+      SR.Audio.life();
       return;
     }
     if (type === SR.BONUS.REPAIR) {
@@ -218,9 +218,6 @@ SR.Bonuses = {
     for (let i = 0; i < list.length; i++) {
       const enemy = list[i];
       if (enemy.dead) continue;
-      const cx = enemy.x + SR.CONST.TANK / 2;
-      const cy = enemy.y + SR.CONST.TANK / 2;
-      game.addExplosion(cx, cy, false, "tank");
       enemy.invuln = 0;
       if (enemy.kind === "heavy" || enemy.kind === "commander") {
         enemy.hp -= 1;

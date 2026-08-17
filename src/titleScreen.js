@@ -39,10 +39,10 @@ SR.Title = {
     this.mode = "menu";
     this.t = this.INTRO_MS;
     this.hits = [];
-    if (!this.themeReady) {
-      this.themeReady = true;
-      SR.Audio.playTheme();
-    }
+    this.themeReady = true;
+    try {
+      SR.Audio.playMenu();
+    } catch (err) {}
   },
 
   close: function () {
@@ -62,7 +62,7 @@ SR.Title = {
     this.t += dt;
     if (!this.alarmPlayed && this.t >= 40) {
       this.alarmPlayed = true;
-      SR.Audio.alarm();
+      try { SR.Audio.alarm(); } catch (err) {}
     }
     const limit = this.reduced ? 700 : this.INTRO_MS;
     if (this.t >= limit) this.showMenu();
@@ -86,11 +86,14 @@ SR.Title = {
   },
 
   activate: function (id) {
+    try {
+      if (id === "start" || id === "help") SR.Audio.confirm();
+    } catch (err) {}
     if (id === "start" && this.onStart) this.onStart();
     else if (id === "help") this.mode = "help";
     else if (id === "sound") {
       SR.Audio.setEnabled(!SR.Audio.enabled);
-      if (SR.Audio.enabled) SR.Audio.playTheme();
+      if (SR.Audio.enabled) SR.Audio.playMenu();
     }
   },
 
@@ -112,8 +115,14 @@ SR.Title = {
     }
     const down = event.code === "KeyS" || event.code === "ArrowDown" || event.key === "s" || event.key === "ы";
     const up = event.code === "KeyW" || event.code === "ArrowUp" || event.key === "w" || event.key === "ц";
-    if (down && !event.repeat) this.selected = (this.selected + 1) % this.ITEMS.length;
-    if (up && !event.repeat) this.selected = (this.selected + this.ITEMS.length - 1) % this.ITEMS.length;
+    if (down && !event.repeat) {
+      this.selected = (this.selected + 1) % this.ITEMS.length;
+      SR.Audio.nav();
+    }
+    if (up && !event.repeat) {
+      this.selected = (this.selected + this.ITEMS.length - 1) % this.ITEMS.length;
+      SR.Audio.nav();
+    }
     if ((event.code === "Enter" || event.code === "Space" || event.key === " ") && !event.repeat) {
       this.activate(this.ITEMS[this.selected]);
     }

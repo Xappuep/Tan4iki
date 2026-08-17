@@ -541,20 +541,134 @@ SR.Render = {
   },
 
   drawExplosions: function (ctx, explosions) {
-    for (let i = 0; i < explosions.length; i++) {
-      const e = explosions[i];
-      const frame = e.t < e.duration * 0.33 ? 0 : (e.t < e.duration * 0.66 ? 1 : 2);
-      const r = (e.big ? 8 : 5) + frame * (e.big ? 6 : 4);
-      if (frame === 0) ctx.fillStyle = SR.PALETTE.explosionHot;
-      else if (frame === 1) ctx.fillStyle = SR.PALETTE.explosion;
-      else ctx.fillStyle = SR.PALETTE.explosionRed;
-      ctx.fillRect(e.x - r, e.y - 2, r * 2, 4);
-      ctx.fillRect(e.x - 2, e.y - r, 4, r * 2);
-      if (frame < 2) ctx.fillRect(e.x - r / 2, e.y - r / 2, r, r);
-      if (frame === 0) {
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(e.x - 2, e.y - 2, 4, 4);
+    for (let i = 0; i < explosions.length; i++) this.drawBurst(ctx, explosions[i]);
+  },
+
+  drawBurst: function (ctx, e) {
+    const t = e.t;
+    const parts = e.parts || [];
+    for (let i = 0; i < parts.length; i++) {
+      const p = parts[i];
+      if (t < p.delay || t > p.delay + p.life) continue;
+      const u = (t - p.delay) / p.life;
+      const x = e.x + p.x + p.vx * (t - p.delay) / 1000;
+      const y = e.y + p.y + p.vy * (t - p.delay) / 1000 + p.g * u * u * 10;
+      ctx.globalAlpha = Math.max(0, 1 - u);
+      ctx.fillStyle = p.color;
+      const s = Math.max(1, Math.round(p.size * (p.grow ? 1 + u : 1 - u * 0.3)));
+      ctx.fillRect(Math.round(x), Math.round(y), s, s);
+      if (p.cloud) {
+        ctx.fillRect(Math.round(x + 2), Math.round(y - 1), s - 1, s - 1);
+        ctx.fillRect(Math.round(x - 1), Math.round(y + 2), s - 1, s);
       }
     }
+    ctx.globalAlpha = 1;
   }
 };
+
+SR.makeBurst = function (x, y, kind, extra, big) {
+  extra = extra || {};
+  if (kind === "tank") return SR.makeTankBurst(x, y, extra);
+  const colors = kind === "steel" ? ["#c8d4e0", "#7a8a9c"] : (kind === "base" ? ["#f0d060", "#c45c26"] : ["#e08a4a", "#8b3a12"]);
+  const parts = [];
+  const n = big ? 8 : 5;
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const sp = 18 + Math.random() * 40;
+    parts.push({
+      x: Math.cos(a) * 2,
+      y: Math.sin(a) * 2,
+      vx: Math.cos(a) * sp,
+      vy: Math.sin(a) * sp,
+      g: 4,
+      size: 2 + (i % 2),
+      color: colors[i % colors.length],
+      delay: 0,
+      life: 160 + Math.random() * 50,
+      cloud: false,
+      grow: false
+    });
+  }
+  return { x: x, y: y, t: 0, duration: 200, kind: kind, parts: parts };
+};
+
+SR.makeTankBurst = function (x, y, extra) {
+  const player = !!extra.player;
+  const heavy = !!extra.heavy;
+  const pal = extra.palette || ["#c44a22", "#7a2410", "#e87848"];
+  const dur = player ? 760 : (heavy ? 800 : 680);
+  const parts = [];
+  const flashN = player ? 7 : 5;
+  for (let i = 0; i < flashN; i++) {
+    parts.push({
+      x: (Math.random() * 10 - 5),
+      y: (Math.random() * 8 - 4),
+      vx: Math.random() * 16 - 8,
+      vy: Math.random() * 16 - 8,
+      g: 0,
+      size: 3 + (i % 3),
+      color: i < 2 ? "#fff8d0" : "#f4c430",
+      delay: 0,
+      life: 90 + Math.random() * 30,
+      cloud: true,
+      grow: true
+    });
+  }
+  const fireN = heavy ? 13 : (player ? 11 : 9);
+  const fireCol = ["#f4c430", "#e07020", "#c41c24", "#8a1818"];
+  for (let i = 0; i < fireN; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const sp = 22 + Math.random() * (heavy ? 70 : 52);
+    parts.push({
+      x: Math.cos(a) * 3,
+      y: Math.sin(a) * 2,
+      vx: Math.cos(a) * sp,
+      vy: Math.sin(a) * sp - 8,
+      g: 6 + Math.random() * 4,
+      size: 2 + (i % 3),
+      color: fireCol[i % fireCol.length],
+      delay: 40 + Math.random() * 50,
+      life: 180 + Math.random() * 80,
+      cloud: i % 3 === 0,
+      grow: false
+    });
+  }
+  const debrisN = heavy ? 7 : 5;
+  for (let i = 0; i < debrisN; i++) {
+    const a = -0.2 + Math.random() * (Math.PI + 0.4);
+    const sp = 30 + Math.random() * 50;
+    parts.push({
+      x: Math.random() * 4 - 2,
+      y: Math.random() * 4 - 2,
+      vx: Math.cos(a) * sp,
+      vy: Math.sin(a) * sp - 20,
+      g: 14,
+      size: 2,
+      color: pal[i % pal.length],
+      delay: 60 + Math.random() * 40,
+      life: 280 + Math.random() * 80,
+      cloud: false,
+      grow: false
+    });
+  }
+  const smokeN = heavy ? 10 : (player ? 8 : 6);
+  const smokeCol = ["#5a5048", "#3a342c", "#7a6a58"];
+  for (let i = 0; i < smokeN; i++) {
+    const a = Math.random() * Math.PI * 2;
+    parts.push({
+      x: Math.cos(a) * 4,
+      y: Math.sin(a) * 3,
+      vx: Math.cos(a) * (8 + Math.random() * 16),
+      vy: Math.sin(a) * 10 - 6,
+      g: -2,
+      size: 3 + (i % 3),
+      color: smokeCol[i % smokeCol.length],
+      delay: 220 + Math.random() * 80,
+      life: 280 + Math.random() * 90,
+      cloud: true,
+      grow: true
+    });
+  }
+  return { x: x, y: y, t: 0, duration: dur, kind: "tank", parts: parts, player: player, heavy: heavy };
+};
+

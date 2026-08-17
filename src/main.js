@@ -48,7 +48,6 @@ SR.main = function () {
   function startGame() {
     SR.Audio.init();
     SR.Title.close();
-    SR.Audio.stopTheme();
     end.classList.add("hidden");
     setPregame(false);
     game.input.dir = null;
