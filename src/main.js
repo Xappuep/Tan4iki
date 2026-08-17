@@ -4,21 +4,30 @@ SR.main = function () {
   const canvas = document.getElementById("game");
   const app = document.getElementById("app");
   const end = document.getElementById("end");
+  const campaignEnd = document.getElementById("campaign-end");
   const hudBest = document.getElementById("best");
   const touch = document.getElementById("touch");
+
+  if (SR.Campaign) SR.Campaign.validateAll();
 
   const game = new SR.Game(canvas, {
     score: document.getElementById("score"),
     best: hudBest,
     lives: document.getElementById("lives"),
     enemies: document.getElementById("enemies"),
+    supply: document.getElementById("supply"),
     status: document.getElementById("status"),
     tankLevel: document.getElementById("tank-level"),
     tankBars: document.getElementById("tank-bars"),
     effects: document.getElementById("effects"),
-    shield: document.getElementById("shield"),
-    killed: document.getElementById("killed")
+    shield: document.getElementById("shield")
   });
+
+  function hideOverlays() {
+    end.classList.add("hidden");
+    campaignEnd.classList.add("hidden");
+    if (SR.Shop) SR.Shop.hide();
+  }
 
   function setPregame(on) {
     if (on) app.classList.add("pregame");
@@ -38,8 +47,8 @@ SR.main = function () {
   }
 
   function showMenu() {
+    hideOverlays();
     game.stop();
-    end.classList.add("hidden");
     setPregame(true);
     showBest();
     SR.Title.showMenu();
@@ -48,25 +57,45 @@ SR.main = function () {
   function startGame() {
     SR.Audio.init();
     SR.Title.close();
-    end.classList.add("hidden");
+    hideOverlays();
     setPregame(false);
     game.input.dir = null;
     game.input.fire = false;
-    game.start();
+    game.startCampaign();
   }
 
   SR.Title.onStart = startGame;
 
-  game.onEnd = function (result, text, score) {
-    document.getElementById("end-title").textContent = result === "win" ? "Победа" : "Поражение";
+  game.onEnd = function (result, text, score, meta) {
+    meta = meta || {};
+    showBest();
+    if (result === "win") {
+      if (meta.last) {
+        document.getElementById("campaign-score").textContent = String(score);
+        document.getElementById("campaign-supply").textContent = String(meta.supply || 0);
+        campaignEnd.classList.remove("hidden");
+        return;
+      }
+      SR.Shop.onContinue = function () {
+        hideOverlays();
+        game.advanceLevel();
+      };
+      SR.Shop.show(game, meta);
+      return;
+    }
+    document.getElementById("end-title").textContent = "Поражение";
     document.getElementById("end-text").textContent = text;
     document.getElementById("end-score").textContent = String(score);
     end.classList.remove("hidden");
-    showBest();
   };
 
   document.getElementById("btn-again").addEventListener("click", startGame);
   document.getElementById("btn-menu").addEventListener("click", showMenu);
+  document.getElementById("btn-next-level").addEventListener("click", function () {
+    SR.Shop.continue();
+  });
+  document.getElementById("btn-campaign-again").addEventListener("click", startGame);
+  document.getElementById("btn-campaign-menu").addEventListener("click", showMenu);
 
   const held = [];
   const tokenDir = {
@@ -123,6 +152,15 @@ SR.main = function () {
       SR.Title.handleKey(event);
       return;
     }
+    if (SR.Shop && SR.Shop.active()) {
+      SR.Shop.handleKey(event);
+      return;
+    }
+    if (event.code === "KeyE" || event.key === "e" || event.key === "у") {
+      event.preventDefault();
+      game.tryEmp();
+      return;
+    }
     if (event.code === "Space" || event.key === " ") {
       event.preventDefault();
       game.input.fire = true;
@@ -135,7 +173,7 @@ SR.main = function () {
   });
 
   window.addEventListener("keyup", function (event) {
-    if (SR.Title.active()) return;
+    if (SR.Title.active() || (SR.Shop && SR.Shop.active())) return;
     if (event.code === "Space" || event.key === " ") {
       game.input.fire = false;
       return;
@@ -183,6 +221,14 @@ SR.main = function () {
   }, function () {
     game.input.fire = false;
   });
+
+  const empBtn = document.getElementById("btn-emp");
+  if (empBtn) {
+    empBtn.addEventListener("click", function (event) {
+      event.preventDefault();
+      game.tryEmp();
+    });
+  }
 
   showBest();
   setPregame(true);

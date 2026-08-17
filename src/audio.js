@@ -889,6 +889,22 @@ SR.Audio = {
     this.toneTo(740, "sine", this.now(), 0.16, 0.04, this.fxGain, 280);
   },
 
+  spawn: function () {
+    if (!this.canSfx(1)) return;
+    this.book(0.2);
+    const t = this.now();
+    this.toneTo(180, "square", t, 0.05, 0.03, this.fxGain);
+    this.toneTo(240, "triangle", t + 0.05, 0.08, 0.035, this.fxGain);
+  },
+
+  buy: function () {
+    if (!this.canSfx(1)) return;
+    this.book(0.18);
+    const t = this.now();
+    this.toneTo(330, "triangle", t, 0.06, 0.04, this.fxGain);
+    this.toneTo(392, "triangle", t + 0.06, 0.08, 0.045, this.fxGain);
+  },
+
   emp: function () {
     if (!this.canSfx(1)) return;
     this.book(0.28);

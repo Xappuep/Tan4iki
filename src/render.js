@@ -61,6 +61,7 @@ SR.Render = {
     ctx.fillRect(0, 0, size, size);
     this.drawGround(ctx, size);
     this.drawTiles(ctx, game.grid, time, false, game);
+    this.drawSpawnWarn(ctx, game);
     this.drawDust(ctx, game.dust);
     if (game.player && !game.player.dead) this.drawTank(ctx, game.player, "player", time, game);
     for (let i = 0; i < game.enemies.length; i++) {
@@ -105,6 +106,24 @@ SR.Render = {
         else if (type === SR.TILE.BASE) this.drawBase(ctx, x, y, time, game);
       }
     }
+  },
+
+  drawSpawnWarn: function (ctx, game) {
+    const w = game.spawnWarn;
+    if (!w) return;
+    const t = SR.CONST.TILE;
+    const on = Math.floor(w.t / 90) % 2 === 0;
+    const x = w.c * t;
+    const y = w.r * t;
+    ctx.fillStyle = on ? "#d4a017" : "#6a5420";
+    ctx.fillRect(x + 1, y + 1, t - 2, 2);
+    ctx.fillRect(x + 1, y + t - 3, t - 2, 2);
+    ctx.fillRect(x + 1, y + 1, 2, t - 2);
+    ctx.fillRect(x + t - 3, y + 1, 2, t - 2);
+    ctx.fillRect(x + 4, y + 4, 3, 3);
+    ctx.fillRect(x + t - 7, y + 4, 3, 3);
+    ctx.fillRect(x + 4, y + t - 7, 3, 3);
+    ctx.fillRect(x + t - 7, y + t - 7, 3, 3);
   },
 
   drawSteel: function (ctx, x, y) {

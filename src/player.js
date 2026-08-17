@@ -31,11 +31,15 @@ SR.Player.prototype.applyLevel = function (level) {
   this.tankLevel = Math.max(1, Math.min(4, level || 1));
   this.maxBullets = this.tankLevel >= 4 ? 3 : (this.tankLevel >= 3 ? 2 : 1);
   this.shotCooldown = this.tankLevel >= 4 ? 200 : (this.tankLevel >= 2 ? 260 : 360);
+  const reload = this.game.reloadRanks || 0;
+  if (reload > 0) this.shotCooldown = Math.round(this.shotCooldown * Math.pow(0.88, reload));
   this.bulletSpeed = this.tankLevel >= 4 ? 260 : (this.tankLevel >= 2 ? 220 : 170);
-  this.bulletDamage = this.tankLevel >= 4 ? 2 : 1;
+  this.bulletDamage = (this.tankLevel >= 4 ? 2 : 1) + (this.game.ammoBoost ? 1 : 0);
   this.pierce = 0;
   this.maxHp = 1;
   this.hp = 1;
+  this.baseSpeed = 96 * (1 + 0.1 * (this.game.speedRanks || 0));
+  this.speed = this.baseSpeed;
 };
 
 SR.Player.prototype.isProtected = function () {

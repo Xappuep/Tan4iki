@@ -215,6 +215,121 @@ button.ghost {
   border-color: var(--line);
 }
 
+#btn-next-level.selected {
+  box-shadow: 0 0 0 2px #f0d060;
+}
+
+.shop-panel {
+  width: min(720px, 100%);
+  text-align: left;
+}
+
+.shop-funds {
+  color: var(--accent);
+  font-size: 18px;
+  margin: 0 0 12px;
+}
+
+.shop-layout {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+#shop-tank {
+  image-rendering: pixelated;
+  border: var(--pixel) solid var(--line);
+  background: #2a2412;
+  flex-shrink: 0;
+}
+
+#shop-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 52vh;
+  overflow: auto;
+}
+
+.shop-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px;
+  border: 2px solid var(--line);
+  background: #141a12;
+  cursor: pointer;
+}
+
+.shop-row.selected {
+  border-color: var(--accent);
+  background: #1e2418;
+}
+
+.shop-row.dim {
+  opacity: 0.72;
+}
+
+.shop-icon {
+  image-rendering: pixelated;
+  border: 2px solid #2a2412;
+}
+
+.shop-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.shop-body strong {
+  display: block;
+  color: var(--accent);
+  font-size: 14px;
+}
+
+.shop-body span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.shop-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.shop-price {
+  color: var(--accent);
+  font-size: 18px;
+}
+
+.shop-row button {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.shop-hint {
+  margin: 12px 0 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.touch .emp {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  background: #4a2a68;
+  color: #f0d0ff;
+  border-color: #b45aff;
+}
+
 .touch {
   display: none;
   margin-top: 16px;

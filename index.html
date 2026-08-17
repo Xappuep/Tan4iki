@@ -11,7 +11,7 @@
   <div id="app">
     <header class="top-bar">
       <h1>Стальные рубежи</h1>
-      <p class="subtitle">Рубеж 1 · штаб под охраной</p>
+      <p class="subtitle" id="subtitle">Рубеж 1 · штаб под охраной</p>
     </header>
 
     <div id="stage">
@@ -35,16 +35,16 @@
           <div id="effects" class="hud-effects">Нет</div>
         </div>
         <div class="hud-block">
-          <div class="hud-label">Уничтожено</div>
-          <div id="killed" class="hud-value">0</div>
-        </div>
-        <div class="hud-block">
-          <div class="hud-label">Осталось</div>
-          <div id="enemies" class="hud-value">0</div>
+          <div class="hud-label">Враги</div>
+          <div id="enemies" class="hud-value">0 / 0</div>
         </div>
         <div class="hud-block">
           <div class="hud-label">Очки</div>
           <div id="score" class="hud-value">0</div>
+        </div>
+        <div class="hud-block">
+          <div class="hud-label">Снабжение</div>
+          <div id="supply" class="hud-value">0</div>
         </div>
         <div class="hud-block">
           <div class="hud-label">Рекорд</div>
@@ -55,6 +55,31 @@
           <div id="status" class="hud-status">Готов</div>
         </div>
       </aside>
+    </div>
+
+    <div id="shop" class="overlay hidden">
+      <div class="panel shop-panel">
+        <h2>Полевой арсенал</h2>
+        <p id="shop-lead" class="lead"></p>
+        <p class="shop-funds">Снабжение: <span id="shop-supply">0</span></p>
+        <div class="shop-layout">
+          <canvas id="shop-tank" width="96" height="96" aria-hidden="true"></canvas>
+          <div id="shop-list"></div>
+        </div>
+        <button id="btn-next-level" type="button">К следующему рубежу</button>
+        <p class="shop-hint">W/S · ENTER купить · кнопка — дальше</p>
+      </div>
+    </div>
+
+    <div id="campaign-end" class="overlay hidden">
+      <div class="panel">
+        <h2 id="campaign-title">Кампания завершена</h2>
+        <p id="campaign-text" class="lead">Последний периметр удержан.</p>
+        <p class="best-line">Итоговый счёт: <span id="campaign-score">0</span></p>
+        <p class="best-line">Снабжение: <span id="campaign-supply">0</span></p>
+        <button id="btn-campaign-again" type="button">Начать кампанию заново</button>
+        <button id="btn-campaign-menu" type="button" class="ghost">В меню</button>
+      </div>
     </div>
 
     <div id="end" class="overlay hidden">
@@ -77,6 +102,7 @@
         </div>
       </div>
       <button type="button" id="btn-fire" class="fire" aria-label="Огонь">ОГОНЬ</button>
+      <button type="button" id="btn-emp" class="emp hidden" aria-label="Импульс">EMP</button>
     </div>
   </div>
 
@@ -89,6 +115,8 @@
   <script src="src/enemy.js"></script>
   <script src="src/bonuses.js"></script>
   <script src="src/render.js"></script>
+  <script src="src/campaign.js"></script>
+  <script src="src/shop.js"></script>
   <script src="src/titleScreen.js"></script>
   <script src="src/game.js"></script>
   <script src="src/main.js"></script>

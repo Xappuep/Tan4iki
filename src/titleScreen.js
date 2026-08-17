@@ -295,7 +295,7 @@ SR.Title = {
     ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
 
     const rows = [
-      { id: "start", text: "НАЧАТЬ ОПЕРАЦИЮ", pick: true },
+      { id: "start", text: "НАЧАТЬ КАМПАНИЮ", pick: true },
       { id: "help", text: "УПРАВЛЕНИЕ", pick: true },
       { id: "record", text: "РЕКОРД: " + SR.Game.loadBest(), pick: false },
       { id: "sound", text: "ЗВУК: " + (SR.Audio.enabled ? "ВКЛ." : "ВЫКЛ."), pick: true }
@@ -342,10 +342,10 @@ SR.Title = {
     ctx.font = "bold 15px Courier New";
     ctx.fillStyle = "#e8dcc4";
     ctx.fillText("WASD или стрелки — движение", size / 2, y + 84);
-    ctx.fillText("Пробел — огонь", size / 2, y + 112);
+    ctx.fillText("Пробел — огонь · E — импульс", size / 2, y + 112);
     ctx.fillStyle = "#c8bca0";
-    ctx.fillText("Цель: защити штаб", size / 2, y + 150);
-    ctx.fillText("и уничтожь врагов.", size / 2, y + 172);
+    ctx.fillText("Кампания: 6 рубежей", size / 2, y + 150);
+    ctx.fillText("Между рубежами — Полевой арсенал.", size / 2, y + 172);
     ctx.fillStyle = "#8ab4cc";
     ctx.font = "bold 14px Courier New";
     ctx.fillText("ENTER / КЛИК — НАЗАД", size / 2, y + 210);

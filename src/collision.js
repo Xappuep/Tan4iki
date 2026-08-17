@@ -9,7 +9,7 @@ SR.Collision = {
     return { x: x, y: y, w: SR.CONST.TANK, h: SR.CONST.TANK };
   },
 
-  blockedForTank: function (grid, x, y, size) {
+  blockedForTank: function (grid, x, y, size, tank) {
     const C = SR.CONST;
     const T = SR.TILE;
     if (x < 0 || y < 0 || x + size > C.COLS * C.TILE || y + size > C.ROWS * C.TILE) {
@@ -28,6 +28,9 @@ SR.Collision = {
           continue;
         }
         if (type === T.STEEL || type === T.WATER || type === T.BASE) {
+          return true;
+        }
+        if (tank && tank.id === "player" && tank.game && SR.Campaign && SR.Campaign.isSpawnCell(tank.game, c, r)) {
           return true;
         }
       }
@@ -53,7 +56,7 @@ SR.Collision = {
     if (dir === 1) nx += dist;
     if (dir === 2) ny += dist;
     if (dir === 3) nx -= dist;
-    if (SR.Collision.blockedForTank(grid, nx, ny, SR.CONST.TANK)) return false;
+    if (SR.Collision.blockedForTank(grid, nx, ny, SR.CONST.TANK, tank)) return false;
     if (SR.Collision.overlapsAnyTank(nx, ny, tanks, tank)) return false;
     tank.x = nx;
     tank.y = ny;
@@ -77,7 +80,7 @@ SR.Collision = {
     if (Math.abs(tank[axis] - snap) > 2.5) return false;
     const old = tank[axis];
     tank[axis] = snap;
-    if (SR.Collision.blockedForTank(grid, tank.x, tank.y, SR.CONST.TANK) ||
+    if (SR.Collision.blockedForTank(grid, tank.x, tank.y, SR.CONST.TANK, tank) ||
         SR.Collision.overlapsAnyTank(tank.x, tank.y, tanks, tank)) {
       tank[axis] = old;
       return false;
