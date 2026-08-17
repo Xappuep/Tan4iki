@@ -1,9 +1,9 @@
 window.SR = window.SR || {};
 
 SR.ENEMY_KINDS = {
-  basic: { hp: 1, speed: 72, cooldown: 780, score: 100, color: "basic" },
-  fast: { hp: 1, speed: 128, cooldown: 520, score: 200, color: "fast" },
-  heavy: { hp: 3, speed: 52, cooldown: 920, score: 400, color: "heavy" }
+  basic: { hp: 1, speed: 46, cooldown: 1150, score: 100, color: "basic", bulletSpeed: 150 },
+  fast: { hp: 1, speed: 80, cooldown: 860, score: 200, color: "fast", bulletSpeed: 170 },
+  heavy: { hp: 3, speed: 32, cooldown: 1400, score: 400, color: "heavy", bulletSpeed: 135 }
 };
 
 SR.Enemy = function (game, x, y, kind, id) {
@@ -19,11 +19,12 @@ SR.Enemy = function (game, x, y, kind, id) {
   this.maxHp = spec.hp;
   this.score = spec.score;
   this.shotDelay = spec.cooldown;
+  this.bulletSpeed = spec.bulletSpeed || 150;
   this.dead = false;
   this.invuln = 500;
   this.shield = 0;
   this.strongShot = 0;
-  this.cooldown = 400;
+  this.cooldown = 700;
   this.thinkIn = 200;
 };
 

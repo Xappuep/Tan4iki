@@ -18,7 +18,7 @@ SR.Player = function (game, x, y) {
   this.cooldown = 0;
   this.shotCooldown = 280;
   this.maxBullets = 1;
-  this.bulletSpeed = 280;
+  this.bulletSpeed = 170;
   this.bulletDamage = 1;
   this.moved = false;
   this.slideDir = 0;
@@ -29,8 +29,8 @@ SR.Player = function (game, x, y) {
 SR.Player.prototype.applyLevel = function (level) {
   this.tankLevel = Math.max(1, Math.min(3, level || 1));
   this.maxBullets = this.tankLevel >= 3 ? 2 : 1;
-  this.shotCooldown = this.tankLevel >= 2 ? 190 : 280;
-  this.bulletSpeed = this.tankLevel >= 2 ? 380 : 280;
+  this.shotCooldown = this.tankLevel >= 2 ? 260 : 360;
+  this.bulletSpeed = this.tankLevel >= 2 ? 230 : 170;
   this.bulletDamage = this.tankLevel >= 3 ? 2 : 1;
   this.maxHp = this.tankLevel >= 3 ? 2 : 1;
   if (this.hp > this.maxHp) this.hp = this.maxHp;

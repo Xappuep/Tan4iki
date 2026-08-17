@@ -7,7 +7,7 @@ SR.Bullet = function (x, y, dir, ownerId, strong, extra) {
   this.dir = dir;
   this.ownerId = ownerId;
   this.strong = !!strong;
-  this.speed = extra.speed || 280;
+  this.speed = extra.speed || 170;
   this.size = extra.size || 6;
   this.damage = extra.damage || 1;
   this.alive = true;
@@ -45,7 +45,7 @@ SR.spawnBulletFromTank = function (tank) {
     tank.id,
     false,
     {
-      speed: tank.bulletSpeed || 280,
+      speed: tank.bulletSpeed || 170,
       size: level >= 3 ? 8 : (level >= 2 ? 7 : 6),
       damage: tank.bulletDamage || 1
     }
