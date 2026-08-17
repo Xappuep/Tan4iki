@@ -13,6 +13,8 @@ SR.Player = function (game, x, y) {
   this.shield = 0;
   this.strongShot = 0;
   this.cooldown = 0;
+  this.moved = false;
+  this.slideDir = 0;
 };
 
 SR.Player.prototype.isProtected = function () {
@@ -25,14 +27,23 @@ SR.Player.prototype.update = function (dt, input) {
   this.shield = Math.max(0, this.shield - dt);
   this.strongShot = Math.max(0, this.strongShot - dt);
   this.cooldown = Math.max(0, this.cooldown - dt);
+  this.moved = false;
 
   const onIce = SR.Collision.onTile(this.game.grid, this, SR.TILE.ICE);
   let dist = this.speed * dt / 1000;
   if (onIce) dist *= 1.45;
 
+  const tanks = this.game.allTanks();
+  const grid = this.game.grid;
   const want = input.dir;
-  const shouldMove = want !== null || onIce;
-  SR.Collision.controlTank(this, want, shouldMove, dist, this.game.grid, this.game.allTanks());
+
+  if (want !== null) {
+    this.dir = want;
+    this.slideDir = want;
+    this.moved = SR.Collision.nudgeMove(this, want, dist, grid, tanks);
+  } else if (onIce) {
+    this.moved = SR.Collision.nudgeMove(this, this.slideDir, dist, grid, tanks);
+  }
 
   if (input.fire && this.cooldown <= 0) this.game.tryShoot(this);
 };

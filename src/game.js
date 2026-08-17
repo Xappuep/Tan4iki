@@ -46,6 +46,8 @@ SR.Game.prototype.allTanks = function () {
 };
 
 SR.Game.prototype.start = function () {
+  SR.Audio.stopTheme();
+  SR.Audio.setEngine(false);
   this.resetWorld();
   this.state = "playing";
   this.ended = false;
@@ -57,6 +59,8 @@ SR.Game.prototype.start = function () {
 
 SR.Game.prototype.stop = function () {
   this.state = "menu";
+  SR.Audio.setEngine(false);
+  SR.Audio.playTheme();
 };
 
 SR.Game.prototype.spawnPlayer = function () {
@@ -112,6 +116,7 @@ SR.Game.prototype.update = function (dt) {
   if (this.state !== "playing" || this.ended) return;
 
   if (this.player && !this.player.dead) this.player.update(dt, this.input);
+  SR.Audio.setEngine(!!(this.player && !this.player.dead && this.player.moved));
   for (let i = 0; i < this.enemies.length; i++) this.enemies[i].update(dt);
   for (let i = 0; i < this.bullets.length; i++) this.bullets[i].update(dt);
   this.resolveBullets();
@@ -278,6 +283,7 @@ SR.Game.prototype.finish = function (result, text) {
   this.ended = true;
   this.state = result;
   this.status = result === "win" ? "Победа" : "Поражение";
+  SR.Audio.setEngine(false);
   if (result === "win") SR.Audio.win();
   else SR.Audio.lose();
   this.saveBest();

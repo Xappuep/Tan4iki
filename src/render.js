@@ -23,19 +23,26 @@ SR.PALETTE = {
   core: "#f4e8b0",
   bullet: "#f4f0d8",
   strong: "#f4c430",
-  playerBody: "#3dba4c",
-  playerDark: "#1e7a2c",
-  playerLight: "#8eec6a",
-  basicBody: "#c9a227",
-  basicDark: "#7a6414",
-  basicLight: "#e8d36a",
-  fastBody: "#3db8c9",
-  fastDark: "#1b6e7a",
-  fastLight: "#8eecf4",
-  heavyBody: "#b04232",
-  heavyDark: "#6a241c",
-  heavyLight: "#e07868",
+  playerBody: "#4a7c32",
+  playerDark: "#2a4e1c",
+  playerLight: "#7cb85a",
+  basicBody: "#6a6e66",
+  basicDark: "#3e423c",
+  basicLight: "#9aa094",
+  fastBody: "#c4a054",
+  fastDark: "#7a6230",
+  fastLight: "#e0c878",
+  heavyBody: "#8a5a28",
+  heavyDark: "#4e3014",
+  heavyLight: "#c48a48",
   tread: "#1a1c18",
+  wheel: "#2e2e2a",
+  wheelHub: "#6a6a62",
+  starRed: "#d41c24",
+  starDark: "#7a1014",
+  starGold: "#f0d060",
+  starGoldDark: "#b88818",
+  starGlow: "#ffe9a0",
   explosion: "#f4c430",
   explosionHot: "#f4f0d8",
   explosionRed: "#c45c26"
@@ -167,17 +174,58 @@ SR.Render = {
   },
 
   drawBase: function (ctx, x, y, time) {
-    ctx.fillStyle = SR.PALETTE.baseDark;
-    ctx.fillRect(x + 2, y + 4, 28, 26);
-    ctx.fillStyle = SR.PALETTE.base;
-    ctx.fillRect(x + 4, y + 6, 24, 22);
-    ctx.fillStyle = SR.PALETTE.steelDark;
-    ctx.fillRect(x + 8, y + 12, 16, 12);
-    const pulse = 0.5 + Math.sin(time / 180) * 0.5;
-    ctx.fillStyle = pulse > 0.45 ? SR.PALETTE.core : SR.PALETTE.base;
-    ctx.fillRect(x + 12, y + 14, 8, 8);
-    ctx.fillStyle = SR.PALETTE.core;
-    ctx.fillRect(x + 14, y + 8, 4, 6);
+    const cx = x + 16;
+    const cy = y + 15;
+    ctx.fillStyle = "#2a2412";
+    ctx.fillRect(x + 4, y + 24, 24, 6);
+    ctx.fillStyle = SR.PALETTE.starGoldDark;
+    ctx.fillRect(x + 6, y + 23, 20, 4);
+    ctx.fillStyle = SR.PALETTE.starGold;
+    ctx.fillRect(x + 8, y + 22, 16, 3);
+
+    const pulse = 0.55 + Math.sin(time / 160) * 0.45;
+    ctx.save();
+    ctx.globalAlpha = 0.22 + pulse * 0.28;
+    ctx.fillStyle = SR.PALETTE.starGlow;
+    this.starPath(ctx, cx, cy, 15, 6.5);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.fillStyle = SR.PALETTE.starGoldDark;
+    this.starPath(ctx, cx + 1, cy + 1, 13.5, 5.6);
+    ctx.fill();
+    ctx.fillStyle = SR.PALETTE.starGold;
+    this.starPath(ctx, cx, cy, 13.5, 5.6);
+    ctx.fill();
+    ctx.fillStyle = SR.PALETTE.starDark;
+    this.starPath(ctx, cx, cy, 11.5, 4.6);
+    ctx.fill();
+    ctx.fillStyle = pulse > 0.5 ? SR.PALETTE.starRed : "#b0141c";
+    this.starPath(ctx, cx, cy, 11.2, 4.5);
+    ctx.fill();
+    ctx.fillStyle = SR.PALETTE.starGold;
+    this.starPath(ctx, cx, cy, 5.2, 2.1);
+    ctx.fill();
+    ctx.fillStyle = SR.PALETTE.starGlow;
+    ctx.fillRect(cx - 1, cy - 1, 3, 3);
+  },
+
+  starPath: function (ctx, cx, cy, outer, inner) {
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const r = i % 2 === 0 ? outer : inner;
+      const a = -Math.PI / 2 + i * Math.PI / 5;
+      const px = cx + Math.cos(a) * r;
+      const py = cy + Math.sin(a) * r;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+  },
+
+  px: function (ctx, color, x, y, w, h) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, w, h);
   },
 
   colorsFor: function (kind) {
@@ -197,30 +245,16 @@ SR.Render = {
     if (tank.invuln > 0 && Math.floor(time / 90) % 2 === 0) return;
     const pal = this.colorsFor(kind);
     if (kind === "heavy" && tank.hp < tank.maxHp) {
-      pal.body = tank.hp === 1 ? "#6a241c" : "#8a3428";
+      pal.body = tank.hp === 1 ? "#5a3414" : "#6e441c";
     }
     ctx.save();
     ctx.translate(tank.x + SR.CONST.TANK / 2, tank.y + SR.CONST.TANK / 2);
     ctx.rotate(tank.dir * Math.PI / 2);
     ctx.translate(-SR.CONST.TANK / 2, -SR.CONST.TANK / 2);
-    ctx.fillStyle = SR.PALETTE.tread;
-    ctx.fillRect(1, 2, 5, 24);
-    ctx.fillRect(22, 2, 5, 24);
-    ctx.fillStyle = pal.dark;
-    for (let i = 0; i < 5; i++) {
-      ctx.fillRect(2, 4 + i * 5, 3, 2);
-      ctx.fillRect(23, 4 + i * 5, 3, 2);
-    }
-    ctx.fillStyle = pal.body;
-    ctx.fillRect(6, 6, 16, 18);
-    ctx.fillStyle = pal.light;
-    ctx.fillRect(8, 8, 12, 6);
-    ctx.fillStyle = pal.dark;
-    ctx.fillRect(9, 12, 10, 8);
-    ctx.fillStyle = pal.body;
-    ctx.fillRect(12, 0, 4, 12);
-    ctx.fillStyle = pal.light;
-    ctx.fillRect(13, 0, 2, 8);
+    if (kind === "player") this.drawT34(ctx, pal);
+    else if (kind === "basic") this.drawPz3(ctx, pal);
+    else if (kind === "fast") this.drawPz4(ctx, pal);
+    else this.drawPz5(ctx, pal);
     ctx.restore();
 
     if (tank.shield > 0) {
@@ -228,6 +262,106 @@ SR.Render = {
       ctx.lineWidth = 2;
       ctx.strokeRect(tank.x - 2, tank.y - 2, SR.CONST.TANK + 4, SR.CONST.TANK + 4);
     }
+  },
+
+  drawTracks: function (ctx, x, y, h, wide) {
+    const w = wide ? 6 : 5;
+    this.px(ctx, SR.PALETTE.tread, x, y, w, h);
+    this.px(ctx, SR.PALETTE.tread, 28 - x - w, y, w, h);
+  },
+
+  drawT34: function (ctx, pal) {
+    this.drawTracks(ctx, 0, 3, 23, true);
+    for (let i = 0; i < 5; i++) {
+      const wy = 4 + i * 4;
+      this.px(ctx, SR.PALETTE.wheel, 1, wy, 4, 4);
+      this.px(ctx, SR.PALETTE.wheel, 23, wy, 4, 4);
+      this.px(ctx, SR.PALETTE.wheelHub, 2, wy + 1, 2, 2);
+      this.px(ctx, SR.PALETTE.wheelHub, 24, wy + 1, 2, 2);
+    }
+    this.px(ctx, pal.dark, 5, 18, 3, 6);
+    this.px(ctx, pal.dark, 20, 18, 3, 6);
+    this.px(ctx, pal.body, 6, 9, 16, 15);
+    this.px(ctx, pal.body, 7, 6, 14, 5);
+    this.px(ctx, pal.light, 8, 7, 12, 3);
+    this.px(ctx, pal.dark, 8, 20, 12, 3);
+    this.px(ctx, pal.dark, 9, 21, 3, 2);
+    this.px(ctx, pal.dark, 16, 21, 3, 2);
+    this.px(ctx, pal.body, 8, 8, 12, 10);
+    this.px(ctx, pal.body, 7, 10, 14, 7);
+    this.px(ctx, pal.light, 10, 9, 8, 3);
+    this.px(ctx, pal.dark, 10, 12, 8, 4);
+    this.px(ctx, pal.dark, 12, 0, 4, 10);
+    this.px(ctx, pal.body, 13, 1, 2, 9);
+    this.px(ctx, pal.dark, 11, 0, 6, 2);
+    this.px(ctx, pal.light, 13, 8, 2, 2);
+  },
+
+  drawPz3: function (ctx, pal) {
+    this.drawTracks(ctx, 1, 4, 21, false);
+    for (let i = 0; i < 6; i++) {
+      const wy = 5 + i * 3;
+      this.px(ctx, SR.PALETTE.wheel, 2, wy, 3, 3);
+      this.px(ctx, SR.PALETTE.wheel, 23, wy, 3, 3);
+    }
+    this.px(ctx, pal.body, 6, 8, 16, 16);
+    this.px(ctx, pal.dark, 6, 8, 16, 2);
+    this.px(ctx, pal.light, 7, 10, 14, 3);
+    this.px(ctx, pal.body, 9, 7, 10, 9);
+    this.px(ctx, pal.dark, 10, 9, 8, 5);
+    this.px(ctx, pal.light, 12, 6, 4, 2);
+    this.px(ctx, pal.dark, 13, 2, 2, 6);
+    this.px(ctx, pal.body, 13, 2, 2, 5);
+    this.px(ctx, pal.dark, 12, 1, 4, 2);
+  },
+
+  drawPz4: function (ctx, pal) {
+    this.px(ctx, pal.dark, 0, 8, 2, 14);
+    this.px(ctx, pal.dark, 26, 8, 2, 14);
+    this.drawTracks(ctx, 2, 3, 23, false);
+    for (let i = 0; i < 4; i++) {
+      const wy = 5 + i * 5;
+      this.px(ctx, SR.PALETTE.wheel, 3, wy, 3, 4);
+      this.px(ctx, SR.PALETTE.wheel, 22, wy, 3, 4);
+    }
+    this.px(ctx, pal.body, 6, 8, 16, 16);
+    this.px(ctx, pal.light, 7, 9, 14, 3);
+    this.px(ctx, pal.body, 8, 6, 12, 11);
+    this.px(ctx, pal.dark, 9, 8, 10, 6);
+    this.px(ctx, pal.light, 10, 7, 8, 2);
+    this.px(ctx, pal.dark, 12, 0, 4, 8);
+    this.px(ctx, pal.body, 13, 0, 2, 8);
+    this.px(ctx, pal.dark, 11, 0, 6, 2);
+    this.px(ctx, pal.light, 12, 0, 1, 2);
+    this.px(ctx, pal.light, 15, 0, 1, 2);
+  },
+
+  drawPz5: function (ctx, pal) {
+    this.drawTracks(ctx, 0, 2, 25, true);
+    for (let i = 0; i < 4; i++) {
+      const wy = 4 + i * 5;
+      this.px(ctx, SR.PALETTE.wheel, 1, wy, 5, 4);
+      this.px(ctx, SR.PALETTE.wheel, 22, wy, 5, 4);
+      this.px(ctx, SR.PALETTE.wheelHub, 2, wy + 1, 2, 2);
+      this.px(ctx, SR.PALETTE.wheelHub, 23, wy + 1, 2, 2);
+    }
+    this.px(ctx, pal.body, 6, 10, 16, 14);
+    this.px(ctx, pal.body, 7, 6, 14, 6);
+    this.px(ctx, pal.body, 8, 4, 12, 4);
+    this.px(ctx, pal.light, 8, 6, 12, 3);
+    this.px(ctx, pal.dark, 8, 20, 12, 3);
+    this.px(ctx, pal.dark, 9, 8, 3, 3);
+    this.px(ctx, pal.dark, 16, 11, 3, 3);
+    this.px(ctx, pal.body, 8, 7, 12, 10);
+    this.px(ctx, pal.body, 7, 9, 14, 7);
+    this.px(ctx, pal.light, 10, 8, 8, 3);
+    this.px(ctx, pal.dark, 10, 11, 8, 4);
+    this.px(ctx, pal.dark, 12, 0, 4, 8);
+    this.px(ctx, pal.body, 13, 0, 2, 9);
+    this.px(ctx, pal.dark, 11, 0, 6, 2);
+    this.px(ctx, pal.light, 12, 0, 1, 2);
+    this.px(ctx, pal.light, 15, 0, 1, 2);
+    this.px(ctx, pal.dark, 13, 8, 2, 2);
   },
 
   drawBullets: function (ctx, bullets) {

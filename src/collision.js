@@ -70,7 +70,7 @@ SR.Collision = {
     const vertical = wantDir === 0 || wantDir === 2;
     const axis = vertical ? "x" : "y";
     const snap = Math.round(tank[axis] / align) * align;
-    if (Math.abs(tank[axis] - snap) > 1.25) return false;
+    if (Math.abs(tank[axis] - snap) > 2.5) return false;
     const old = tank[axis];
     tank[axis] = snap;
     if (SR.Collision.blockedForTank(grid, tank.x, tank.y, SR.CONST.TANK) ||

@@ -21,15 +21,25 @@ SR.main = function () {
     hudBest.textContent = String(best);
   }
 
+  function unlockAudio() {
+    SR.Audio.init();
+    if (game.state === "menu") SR.Audio.playTheme();
+  }
+
+  window.addEventListener("pointerdown", unlockAudio);
+  window.addEventListener("keydown", unlockAudio);
+
   function showMenu() {
     game.stop();
     end.classList.add("hidden");
     menu.classList.remove("hidden");
     showBest();
+    SR.Audio.playTheme();
   }
 
   function startGame() {
     SR.Audio.init();
+    SR.Audio.stopTheme();
     menu.classList.add("hidden");
     end.classList.add("hidden");
     game.start();
@@ -49,32 +59,18 @@ SR.main = function () {
 
   const dirStack = [];
   const keyMap = {
-    ArrowUp: "up",
-    ArrowDown: "down",
-    ArrowLeft: "left",
-    ArrowRight: "right",
-    KeyW: "up",
-    KeyA: "left",
-    KeyS: "down",
-    KeyD: "right"
+    KeyW: 0,
+    KeyA: 2,
+    KeyS: 3,
+    KeyD: 1,
+    ArrowUp: 0,
+    ArrowDown: 2,
+    ArrowLeft: 3,
+    ArrowRight: 1
   };
-  const dirValue = { up: 0, right: 1, down: 2, left: 3 };
 
   function syncDir() {
-    game.input.dir = dirStack.length ? dirValue[dirStack[dirStack.length - 1]] : null;
-  }
-
-  function pressDir(name) {
-    const idx = dirStack.indexOf(name);
-    if (idx >= 0) dirStack.splice(idx, 1);
-    dirStack.push(name);
-    syncDir();
-  }
-
-  function releaseDir(name) {
-    const idx = dirStack.indexOf(name);
-    if (idx >= 0) dirStack.splice(idx, 1);
-    syncDir();
+    game.input.dir = dirStack.length ? dirStack[dirStack.length - 1] : null;
   }
 
   window.addEventListener("keydown", function (event) {
@@ -83,10 +79,13 @@ SR.main = function () {
       game.input.fire = true;
       return;
     }
-    const name = keyMap[event.code];
-    if (!name) return;
+    if (!(event.code in keyMap)) return;
     event.preventDefault();
-    pressDir(name);
+    const dir = keyMap[event.code];
+    const idx = dirStack.indexOf(dir);
+    if (idx >= 0) dirStack.splice(idx, 1);
+    dirStack.push(dir);
+    syncDir();
   });
 
   window.addEventListener("keyup", function (event) {
@@ -94,9 +93,11 @@ SR.main = function () {
       game.input.fire = false;
       return;
     }
-    const name = keyMap[event.code];
-    if (!name) return;
-    releaseDir(name);
+    if (!(event.code in keyMap)) return;
+    const dir = keyMap[event.code];
+    const idx = dirStack.indexOf(dir);
+    if (idx >= 0) dirStack.splice(idx, 1);
+    syncDir();
   });
 
   function bindHold(el, on, off) {
@@ -116,11 +117,21 @@ SR.main = function () {
     el.addEventListener("pointercancel", stop);
   }
 
+  const padDirs = { up: 0, down: 2, left: 3, right: 1 };
   const pads = document.querySelectorAll(".pad");
   for (let i = 0; i < pads.length; i++) {
     (function (btn) {
-      const name = btn.getAttribute("data-dir");
-      bindHold(btn, function () { pressDir(name); }, function () { releaseDir(name); });
+      const dir = padDirs[btn.getAttribute("data-dir")];
+      bindHold(btn, function () {
+        const idx = dirStack.indexOf(dir);
+        if (idx >= 0) dirStack.splice(idx, 1);
+        dirStack.push(dir);
+        syncDir();
+      }, function () {
+        const idx = dirStack.indexOf(dir);
+        if (idx >= 0) dirStack.splice(idx, 1);
+        syncDir();
+      });
     })(pads[i]);
   }
 
