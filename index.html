@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Стальные рубежи</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <header class="top-bar">
+      <h1>Стальные рубежи</h1>
+      <p class="subtitle">Рубеж 1 · штаб под охраной</p>
+    </header>
+
+    <div id="stage">
+      <canvas id="game" width="416" height="416" aria-label="Игровое поле"></canvas>
+      <aside id="hud">
+        <div class="hud-block">
+          <div class="hud-label">Счёт</div>
+          <div id="score" class="hud-value">0</div>
+        </div>
+        <div class="hud-block">
+          <div class="hud-label">Рекорд</div>
+          <div id="best" class="hud-value">0</div>
+        </div>
+        <div class="hud-block">
+          <div class="hud-label">Жизни</div>
+          <div id="lives" class="hud-lives" aria-live="polite"></div>
+        </div>
+        <div class="hud-block">
+          <div class="hud-label">Враги</div>
+          <div id="enemies" class="hud-value">0</div>
+        </div>
+        <div class="hud-block">
+          <div class="hud-label">Статус</div>
+          <div id="status" class="hud-status">Готов</div>
+        </div>
+      </aside>
+    </div>
+
+    <div id="menu" class="overlay">
+      <div class="panel">
+        <h2>Стальные рубежи</h2>
+        <p class="lead">Удержите штаб. Уничтожьте все вражеские машины.</p>
+        <button id="btn-start" type="button">Начать игру</button>
+        <p class="best-line">Лучший результат: <span id="menu-best">0</span></p>
+        <div class="help">
+          <h3>Управление</h3>
+          <p>WASD или стрелки — движение</p>
+          <p>Пробел — выстрел</p>
+          <p>На телефоне — экранные кнопки</p>
+          <h3>Цель</h3>
+          <p>Защитите штаб внизу карты и уничтожьте все танки противника. Кирпич разрушается, сталь держит обычный снаряд. Лес скрывает технику, вода непроходима, лёд ускоряет ход.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="end" class="overlay hidden">
+      <div class="panel">
+        <h2 id="end-title">Победа</h2>
+        <p id="end-text" class="lead"></p>
+        <p class="best-line">Счёт: <span id="end-score">0</span></p>
+        <button id="btn-again" type="button">Играть снова</button>
+        <button id="btn-menu" type="button" class="ghost">В меню</button>
+      </div>
+    </div>
+
+    <div id="touch" class="touch hidden-desktop">
+      <div class="dpad">
+        <button type="button" class="pad" data-dir="up" aria-label="Вверх">▲</button>
+        <div class="dpad-mid">
+          <button type="button" class="pad" data-dir="left" aria-label="Влево">◀</button>
+          <button type="button" class="pad" data-dir="down" aria-label="Вниз">▼</button>
+          <button type="button" class="pad" data-dir="right" aria-label="Вправо">▶</button>
+        </div>
+      </div>
+      <button type="button" id="btn-fire" class="fire" aria-label="Огонь">ОГОНЬ</button>
+    </div>
+  </div>
+
+  <script src="src/map.js"></script>
+  <script src="src/collision.js"></script>
+  <script src="src/audio.js"></script>
+  <script src="src/bullet.js"></script>
+  <script src="src/player.js"></script>
+  <script src="src/enemy.js"></script>
+  <script src="src/render.js"></script>
+  <script src="src/game.js"></script>
+  <script src="src/main.js"></script>
+</body>
+</html>
