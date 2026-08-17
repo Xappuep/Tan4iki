@@ -18,7 +18,32 @@
       <canvas id="game" width="416" height="416" aria-label="Игровое поле"></canvas>
       <aside id="hud">
         <div class="hud-block">
-          <div class="hud-label">Счёт</div>
+          <div class="hud-label">Уровень танка</div>
+          <div id="tank-level" class="hud-value">1</div>
+          <div id="tank-bars" class="tank-bars">■ □ □ □</div>
+        </div>
+        <div class="hud-block">
+          <div class="hud-label">Жизни</div>
+          <div id="lives" class="hud-lives" aria-live="polite"></div>
+        </div>
+        <div class="hud-block">
+          <div class="hud-label">Щит</div>
+          <div id="shield" class="hud-value">0</div>
+        </div>
+        <div class="hud-block hud-effects-block">
+          <div class="hud-label">Эффект</div>
+          <div id="effects" class="hud-effects">Нет</div>
+        </div>
+        <div class="hud-block">
+          <div class="hud-label">Уничтожено</div>
+          <div id="killed" class="hud-value">0</div>
+        </div>
+        <div class="hud-block">
+          <div class="hud-label">Осталось</div>
+          <div id="enemies" class="hud-value">0</div>
+        </div>
+        <div class="hud-block">
+          <div class="hud-label">Очки</div>
           <div id="score" class="hud-value">0</div>
         </div>
         <div class="hud-block">
@@ -26,25 +51,8 @@
           <div id="best" class="hud-value">0</div>
         </div>
         <div class="hud-block">
-          <div class="hud-label">Жизни</div>
-          <div id="lives" class="hud-lives" aria-live="polite"></div>
-        </div>
-        <div class="hud-block">
-          <div class="hud-label">Враги</div>
-          <div id="enemies" class="hud-value">0</div>
-        </div>
-        <div class="hud-block">
           <div class="hud-label">Статус</div>
           <div id="status" class="hud-status">Готов</div>
-        </div>
-        <div class="hud-block">
-          <div class="hud-label">Уровень танка</div>
-          <div id="tank-level" class="hud-value">1</div>
-          <div id="tank-bars" class="tank-bars">□ □ □</div>
-        </div>
-        <div class="hud-block hud-effects-block">
-          <div class="hud-label">Эффекты</div>
-          <div id="effects" class="hud-effects">Нет</div>
         </div>
       </aside>
     </div>
@@ -64,7 +72,7 @@
           <p>Пробел — выстрел</p>
           <p>На телефоне — экранные кнопки</p>
           <h3>Цель</h3>
-          <p>После уничтожения врагов иногда выпадают бонусы: мощь, щит, скорость, жизнь, ремонт штаба, стужа и бомба.</p>
+          <p>После уничтожения врагов иногда выпадают бонусы: усиление, щит, скорость, ремонт, стоп, импульс, залп и жизнь.</p>
         </div>
       </div>
     </div>

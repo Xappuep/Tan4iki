@@ -1,13 +1,15 @@
 window.SR = window.SR || {};
 
 SR.ENEMY_KINDS = {
-  basic: { hp: 1, speed: 46, cooldown: 1150, score: 100, color: "basic", bulletSpeed: 150 },
-  fast: { hp: 1, speed: 80, cooldown: 860, score: 200, color: "fast", bulletSpeed: 170 },
-  heavy: { hp: 3, speed: 32, cooldown: 1400, score: 400, color: "heavy", bulletSpeed: 135 }
+  basic: { hp: 1, speed: 46, cooldown: 1150, score: 100, bulletSpeed: 150 },
+  fast: { hp: 1, speed: 80, cooldown: 860, score: 200, bulletSpeed: 170 },
+  heavy: { hp: 3, speed: 32, cooldown: 1400, score: 400, bulletSpeed: 135 },
+  sapper: { hp: 1, speed: 42, cooldown: 900, score: 250, bulletSpeed: 150 },
+  commander: { hp: 2, speed: 40, cooldown: 1000, score: 600, bulletSpeed: 150 }
 };
 
 SR.Enemy = function (game, x, y, kind, id) {
-  const spec = SR.ENEMY_KINDS[kind];
+  const spec = SR.ENEMY_KINDS[kind] || SR.ENEMY_KINDS.basic;
   this.game = game;
   this.id = id;
   this.kind = kind;
@@ -22,10 +24,9 @@ SR.Enemy = function (game, x, y, kind, id) {
   this.bulletSpeed = spec.bulletSpeed || 150;
   this.dead = false;
   this.invuln = 500;
-  this.shield = 0;
-  this.strongShot = 0;
   this.cooldown = 700;
   this.thinkIn = 200;
+  this.empSlow = 0;
 };
 
 SR.Enemy.prototype.cell = function () {
@@ -63,6 +64,12 @@ SR.Enemy.prototype.chooseDir = function () {
   const player = this.game.player && !this.game.player.dead ? this.game.player : null;
   const base = SR.Map.spawnPixel(SR.SPAWN.base);
   const roll = Math.random();
+  if (this.kind === "fast" && player) {
+    const toP = this.dirToPoint(player.x, player.y);
+    if (roll < 0.55) return (toP + (roll < 0.27 ? 1 : 3)) % 4;
+    return toP;
+  }
+  if (this.kind === "sapper") return this.dirToPoint(base.x, base.y);
   if (player && roll < 0.4) return this.dirToPoint(player.x, player.y);
   if (roll < 0.78) return this.dirToPoint(base.x, base.y);
   return Math.floor(Math.random() * 4);
@@ -72,6 +79,7 @@ SR.Enemy.prototype.update = function (dt) {
   if (this.dead) return;
   this.invuln = Math.max(0, this.invuln - dt);
   this.cooldown = Math.max(0, this.cooldown - dt);
+  this.empSlow = Math.max(0, this.empSlow - dt);
   if (this.game.freezeLeft > 0) return;
   this.thinkIn -= dt;
 
@@ -79,21 +87,29 @@ SR.Enemy.prototype.update = function (dt) {
   const basePos = SR.Map.spawnPixel(SR.SPAWN.base);
   const baseTarget = { x: basePos.x, y: basePos.y };
   let want = this.dir;
+  const me = this.cell();
+  const nearBase = Math.abs(me.c - SR.SPAWN.base.c) + Math.abs(me.r - SR.SPAWN.base.r) <= 5;
 
-  if (player && this.sees(player)) {
+  if (this.kind === "sapper" && nearBase) {
+    // Сапёр у штаба бьёт в сторону базы, чтобы снять кирпичную обкладку.
+    want = this.dirToPoint(basePos.x, basePos.y);
+    if (this.cooldown <= 0) this.game.tryShoot(this);
+  } else if (player && this.sees(player)) {
     want = this.dirToPoint(player.x, player.y);
     if (this.cooldown <= 0) this.game.tryShoot(this);
   } else if (this.sees(baseTarget)) {
     want = this.dirToPoint(basePos.x, basePos.y);
     if (this.cooldown <= 0) this.game.tryShoot(this);
   } else if (this.thinkIn <= 0) {
-    this.thinkIn = 380 + Math.random() * 720;
+    const think = this.kind === "fast" ? 180 + Math.random() * 280 : 420 + Math.random() * 700;
+    this.thinkIn = think;
     want = this.chooseDir();
-    if (this.cooldown <= 0 && Math.random() < 0.35) this.game.tryShoot(this);
+    if (this.cooldown <= 0 && Math.random() < (this.kind === "fast" ? 0.45 : 0.3)) this.game.tryShoot(this);
   }
 
   const onIce = SR.Collision.onTile(this.game.grid, this, SR.TILE.ICE);
   let dist = this.speed * dt / 1000;
+  if (this.empSlow > 0) dist *= 0.4;
   if (onIce) dist *= 1.45;
   const moved = SR.Collision.controlTank(this, want, true, dist, this.game.grid, this.game.allTanks());
   if (!moved) {

@@ -16,10 +16,11 @@ SR.Player = function (game, x, y) {
   this.speedBoost = 0;
   this.flash = 0;
   this.cooldown = 0;
-  this.shotCooldown = 280;
+  this.shotCooldown = 360;
   this.maxBullets = 1;
   this.bulletSpeed = 170;
   this.bulletDamage = 1;
+  this.pierce = 0;
   this.moved = false;
   this.slideDir = 0;
   this.applyLevel(game.tankLevel || 1);
@@ -27,14 +28,14 @@ SR.Player = function (game, x, y) {
 };
 
 SR.Player.prototype.applyLevel = function (level) {
-  this.tankLevel = Math.max(1, Math.min(3, level || 1));
-  this.maxBullets = this.tankLevel >= 3 ? 2 : 1;
-  this.shotCooldown = this.tankLevel >= 2 ? 260 : 360;
-  this.bulletSpeed = this.tankLevel >= 2 ? 230 : 170;
-  this.bulletDamage = this.tankLevel >= 3 ? 2 : 1;
-  this.maxHp = this.tankLevel >= 3 ? 2 : 1;
-  if (this.hp > this.maxHp) this.hp = this.maxHp;
-  if (this.hp < 1) this.hp = this.maxHp;
+  this.tankLevel = Math.max(1, Math.min(4, level || 1));
+  this.maxBullets = this.tankLevel >= 4 ? 3 : (this.tankLevel >= 3 ? 2 : 1);
+  this.shotCooldown = this.tankLevel >= 4 ? 200 : (this.tankLevel >= 2 ? 260 : 360);
+  this.bulletSpeed = this.tankLevel >= 4 ? 260 : (this.tankLevel >= 2 ? 220 : 170);
+  this.bulletDamage = 1;
+  this.pierce = this.tankLevel >= 4 ? 1 : 0;
+  this.maxHp = 1;
+  this.hp = 1;
 };
 
 SR.Player.prototype.isProtected = function () {
@@ -65,6 +66,8 @@ SR.Player.prototype.update = function (dt, input) {
   } else if (onIce) {
     this.moved = SR.Collision.nudgeMove(this, this.slideDir, dist, grid, tanks);
   }
+
+  if (this.moved) this.game.addDust(this);
 
   if (input.fire && this.cooldown <= 0) this.game.tryShoot(this);
 };

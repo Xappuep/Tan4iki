@@ -191,6 +191,16 @@ SR.Audio = {
     this.tone(1320, 0.18, "square", 0.04);
   },
 
+  emp: function () {
+    this.tone(180, 0.22, "sawtooth", 0.08, 55);
+    this.tone(90, 0.28, "square", 0.05);
+  },
+
+  shield: function () {
+    this.tone(660, 0.08, "triangle", 0.07);
+    this.tone(990, 0.12, "square", 0.05);
+  },
+
   bomb: function () {
     this.noise(0.34, 0.18);
     this.tone(70, 0.36, "sawtooth", 0.12, 36);

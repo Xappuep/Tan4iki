@@ -10,6 +10,7 @@ SR.Bullet = function (x, y, dir, ownerId, strong, extra) {
   this.speed = extra.speed || 170;
   this.size = extra.size || 6;
   this.damage = extra.damage || 1;
+  this.pierce = extra.pierce || 0;
   this.alive = true;
 };
 
@@ -46,8 +47,9 @@ SR.spawnBulletFromTank = function (tank) {
     false,
     {
       speed: tank.bulletSpeed || 170,
-      size: level >= 3 ? 8 : (level >= 2 ? 7 : 6),
-      damage: tank.bulletDamage || 1
+      size: level >= 4 ? 8 : (level >= 2 ? 7 : 6),
+      damage: tank.bulletDamage || 1,
+      pierce: tank.pierce || 0
     }
   );
 };

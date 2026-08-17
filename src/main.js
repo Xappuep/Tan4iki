@@ -15,7 +15,9 @@ SR.main = function () {
     status: document.getElementById("status"),
     tankLevel: document.getElementById("tank-level"),
     tankBars: document.getElementById("tank-bars"),
-    effects: document.getElementById("effects")
+    effects: document.getElementById("effects"),
+    shield: document.getElementById("shield"),
+    killed: document.getElementById("killed")
   });
 
   function showBest() {

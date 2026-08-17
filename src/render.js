@@ -7,34 +7,40 @@ SR.PALETTE = {
   brickDark: "#8b3a12",
   brickLight: "#e08a4a",
   mortar: "#4a2a14",
-  steel: "#8a93a0",
-  steelDark: "#4e5864",
-  steelLight: "#d0d6de",
+  steel: "#7a8a9c",
+  steelDark: "#3a4a5c",
+  steelLight: "#c8d4e0",
   water: "#1e5f8a",
   waterLight: "#3a8bb8",
   forest: "#1f6b3a",
   forestLight: "#2f9e56",
   forestDark: "#0f3d22",
-  ice: "#b8d4e8",
-  iceLight: "#e8f4fc",
-  iceLine: "#7aa0bc",
+  ice: "#c8e4f4",
+  iceLight: "#eef8fc",
+  iceLine: "#8ab4cc",
   base: "#d4a017",
   baseDark: "#8a6a10",
   core: "#f4e8b0",
   bullet: "#f4f0d8",
   strong: "#f4c430",
-  playerBody: "#4a7c32",
+  playerBody: "#5a8a32",
   playerDark: "#2a4e1c",
-  playerLight: "#7cb85a",
-  basicBody: "#6a6e66",
-  basicDark: "#3e423c",
-  basicLight: "#9aa094",
-  fastBody: "#c4a054",
-  fastDark: "#7a6230",
-  fastLight: "#e0c878",
-  heavyBody: "#8a5a28",
-  heavyDark: "#4e3014",
-  heavyLight: "#c48a48",
+  playerLight: "#c4b04a",
+  basicBody: "#c44a22",
+  basicDark: "#7a2410",
+  basicLight: "#e87848",
+  fastBody: "#e09028",
+  fastDark: "#8a5410",
+  fastLight: "#f4c450",
+  heavyBody: "#6a1838",
+  heavyDark: "#3a0c24",
+  heavyLight: "#a04068",
+  sapperBody: "#a84820",
+  sapperDark: "#5c2410",
+  sapperLight: "#d87840",
+  commanderBody: "#7a1430",
+  commanderDark: "#3c0818",
+  commanderLight: "#f0d060",
   tread: "#1a1c18",
   wheel: "#2e2e2a",
   wheelHub: "#6a6a62",
@@ -55,6 +61,7 @@ SR.Render = {
     ctx.fillRect(0, 0, size, size);
     this.drawGround(ctx, size);
     this.drawTiles(ctx, game.grid, time, false, game);
+    this.drawDust(ctx, game.dust);
     if (game.player && !game.player.dead) this.drawTank(ctx, game.player, "player", time, game);
     for (let i = 0; i < game.enemies.length; i++) {
       const enemy = game.enemies[i];
@@ -63,6 +70,7 @@ SR.Render = {
     this.drawTiles(ctx, game.grid, time, true, game);
     SR.Bonuses.draw(ctx, game, time);
     this.drawBullets(ctx, game.bullets);
+    this.drawSparks(ctx, game.sparks);
     this.drawExplosions(ctx, game.explosions);
   },
 
@@ -177,17 +185,18 @@ SR.Render = {
     const cx = x + 16;
     const cy = y + 15;
     const hurt = game && game.baseHp < game.baseMaxHp;
+    const glow = game && game.baseGlow > 0;
     ctx.fillStyle = "#2a2412";
     ctx.fillRect(x + 4, y + 24, 24, 6);
     ctx.fillStyle = SR.PALETTE.starGoldDark;
     ctx.fillRect(x + 6, y + 23, 20, 4);
-    ctx.fillStyle = SR.PALETTE.starGold;
+    ctx.fillStyle = glow ? "#fff4b0" : SR.PALETTE.starGold;
     ctx.fillRect(x + 8, y + 22, 16, 3);
 
-    const pulse = 0.55 + Math.sin(time / 160) * 0.45;
+    const pulse = 0.55 + Math.sin(time / (hurt ? 90 : 160)) * 0.45;
     ctx.save();
-    ctx.globalAlpha = 0.22 + pulse * 0.28;
-    ctx.fillStyle = hurt ? "#c45c26" : SR.PALETTE.starGlow;
+    ctx.globalAlpha = glow ? 0.55 : (0.22 + pulse * (hurt ? 0.5 : 0.28));
+    ctx.fillStyle = glow ? "#fff4b0" : (hurt ? "#c45c26" : SR.PALETTE.starGlow);
     this.starPath(ctx, cx, cy, 15, 6.5);
     ctx.fill();
     ctx.restore();
@@ -195,7 +204,7 @@ SR.Render = {
     ctx.fillStyle = SR.PALETTE.starGoldDark;
     this.starPath(ctx, cx + 1, cy + 1, 13.5, 5.6);
     ctx.fill();
-    ctx.fillStyle = hurt ? "#a07820" : SR.PALETTE.starGold;
+    ctx.fillStyle = glow ? "#fff0a0" : (hurt ? "#a07820" : SR.PALETTE.starGold);
     this.starPath(ctx, cx, cy, 13.5, 5.6);
     ctx.fill();
     ctx.fillStyle = SR.PALETTE.starDark;
@@ -204,7 +213,7 @@ SR.Render = {
     ctx.fillStyle = hurt ? "#6a1014" : (pulse > 0.5 ? SR.PALETTE.starRed : "#b0141c");
     this.starPath(ctx, cx, cy, 11.2, 4.5);
     ctx.fill();
-    ctx.fillStyle = hurt ? "#c9a227" : SR.PALETTE.starGold;
+    ctx.fillStyle = glow ? "#fff8d0" : (hurt ? "#c9a227" : SR.PALETTE.starGold);
     this.starPath(ctx, cx, cy, 5.2, 2.1);
     ctx.fill();
     ctx.fillStyle = SR.PALETTE.starGlow;
@@ -213,6 +222,11 @@ SR.Render = {
       ctx.fillStyle = "#2a2412";
       ctx.fillRect(cx - 6, cy, 12, 2);
       ctx.fillRect(cx + 2, cy - 5, 2, 8);
+      if (Math.floor(time / 140) % 2 === 0) {
+        ctx.fillStyle = "#f4c430";
+        ctx.fillRect(x + 14, y + 1, 4, 4);
+        ctx.fillRect(x + 15, y + 5, 2, 4);
+      }
     }
   },
 
@@ -241,15 +255,24 @@ SR.Render = {
     if (kind === "heavy") {
       return { body: SR.PALETTE.heavyBody, dark: SR.PALETTE.heavyDark, light: SR.PALETTE.heavyLight };
     }
+    if (kind === "sapper") {
+      return { body: SR.PALETTE.sapperBody, dark: SR.PALETTE.sapperDark, light: SR.PALETTE.sapperLight };
+    }
+    if (kind === "commander") {
+      return { body: SR.PALETTE.commanderBody, dark: SR.PALETTE.commanderDark, light: SR.PALETTE.commanderLight };
+    }
     if (kind === "basic") {
       return { body: SR.PALETTE.basicBody, dark: SR.PALETTE.basicDark, light: SR.PALETTE.basicLight };
     }
     const level = tank && tank.tankLevel ? tank.tankLevel : 1;
+    if (level >= 4) {
+      return { body: "#6e9a3c", dark: "#243c14", light: "#f4d060" };
+    }
     if (level >= 3) {
-      return { body: "#62b044", dark: "#245018", light: "#f0d060" };
+      return { body: "#628c38", dark: "#245018", light: "#e0c050" };
     }
     if (level >= 2) {
-      return { body: "#5e9a3e", dark: "#2a4e1c", light: "#b4f07a" };
+      return { body: "#5e8a36", dark: "#2a4e1c", light: "#d4b84a" };
     }
     return { body: SR.PALETTE.playerBody, dark: SR.PALETTE.playerDark, light: SR.PALETTE.playerLight };
   },
@@ -258,7 +281,7 @@ SR.Render = {
     if (tank.invuln > 0 && Math.floor(time / 90) % 2 === 0) return;
     const pal = this.colorsFor(kind, tank);
     if (kind === "heavy" && tank.hp < tank.maxHp) {
-      pal.body = tank.hp === 1 ? "#5a3414" : "#6e441c";
+      pal.body = tank.hp === 1 ? "#4a1028" : "#5a1430";
     }
     ctx.save();
     ctx.translate(tank.x + SR.CONST.TANK / 2, tank.y + SR.CONST.TANK / 2);
@@ -267,23 +290,30 @@ SR.Render = {
     if (kind === "player") this.drawT34(ctx, pal, tank.tankLevel || 1);
     else if (kind === "basic") this.drawPz3(ctx, pal);
     else if (kind === "fast") this.drawPz4(ctx, pal);
+    else if (kind === "sapper") this.drawSapper(ctx, pal);
+    else if (kind === "commander") this.drawCommander(ctx, pal);
     else this.drawPz5(ctx, pal);
     ctx.restore();
 
     if (game && game.freezeLeft > 0 && kind !== "player") {
-      ctx.fillStyle = "rgba(120, 200, 255, 0.35)";
+      ctx.fillStyle = "rgba(120, 200, 255, 0.38)";
       ctx.fillRect(tank.x, tank.y, SR.CONST.TANK, SR.CONST.TANK);
       ctx.fillStyle = "#e8f8ff";
-      ctx.fillRect(tank.x + 6, tank.y + 2, 2, 6);
-      ctx.fillRect(tank.x + 18, tank.y + 8, 2, 6);
-      ctx.fillRect(tank.x + 12, tank.y + 16, 2, 5);
+      ctx.fillRect(tank.x + 4, tank.y + 2, 2, 6);
+      ctx.fillRect(tank.x + 12, tank.y + 1, 2, 5);
+      ctx.fillRect(tank.x + 20, tank.y + 8, 2, 6);
+      ctx.fillRect(tank.x + 8, tank.y + 16, 2, 5);
+      ctx.fillRect(tank.x + 16, tank.y + 18, 2, 4);
+      ctx.fillRect(tank.x + 6, tank.y + 10, 6, 2);
+      ctx.fillRect(tank.x + 16, tank.y + 4, 6, 2);
     }
 
     if (tank.shieldCharges > 0) {
       const cx = tank.x + SR.CONST.TANK / 2;
       const cy = tank.y + SR.CONST.TANK / 2;
-      ctx.strokeStyle = tank.shieldCharges > 1 ? "#8cd0ff" : "#3a8bdc";
-      ctx.lineWidth = 2;
+      const flash = tank.flash > 0;
+      ctx.strokeStyle = flash ? "#ffffff" : (tank.shieldCharges > 1 ? "#8cd0ff" : "#3a8bdc");
+      ctx.lineWidth = flash ? 3 : 2;
       ctx.beginPath();
       for (let i = 0; i < 6; i++) {
         const a = Math.PI / 6 + i * Math.PI / 3;
@@ -294,7 +324,7 @@ SR.Render = {
       }
       ctx.closePath();
       ctx.stroke();
-      ctx.fillStyle = tank.shieldCharges > 1 ? "rgba(140, 208, 255, 0.12)" : "rgba(58, 139, 220, 0.08)";
+      ctx.fillStyle = flash ? "rgba(200, 236, 255, 0.28)" : (tank.shieldCharges > 1 ? "rgba(140, 208, 255, 0.12)" : "rgba(58, 139, 220, 0.08)");
       ctx.fill();
     }
 
@@ -323,13 +353,23 @@ SR.Render = {
     if (level >= 3) {
       this.px(ctx, pal.light, 0, 8, 2, 12);
       this.px(ctx, pal.light, 26, 8, 2, 12);
+      this.px(ctx, pal.dark, 0, 10, 2, 3);
+      this.px(ctx, pal.dark, 26, 10, 2, 3);
     }
     this.px(ctx, pal.dark, 5, 18, 3, 6);
     this.px(ctx, pal.dark, 20, 18, 3, 6);
     this.px(ctx, pal.body, 6, 9, 16, 15);
     this.px(ctx, pal.body, 7, 6, 14, 5);
     this.px(ctx, pal.light, 8, 7, 12, 3);
-    if (level >= 3) {
+    if (level >= 2) {
+      this.px(ctx, pal.light, 7, 15, 14, 2);
+    }
+    if (level >= 4) {
+      this.px(ctx, pal.light, 6, 11, 16, 3);
+      this.px(ctx, pal.dark, 6, 14, 16, 1);
+      this.px(ctx, "#f4e8b0", 5, 12, 2, 6);
+      this.px(ctx, "#f4e8b0", 21, 12, 2, 6);
+    } else if (level >= 3) {
       this.px(ctx, pal.light, 6, 14, 16, 3);
       this.px(ctx, pal.dark, 6, 17, 16, 1);
     }
@@ -340,13 +380,22 @@ SR.Render = {
     this.px(ctx, pal.body, 7, 10, 14, 7);
     this.px(ctx, pal.light, 10, 9, 8, 3);
     this.px(ctx, pal.dark, 10, 12, 8, 4);
-    const barrel = level >= 2 ? 12 : 10;
-    this.px(ctx, pal.dark, 12, 0, 4, barrel);
-    this.px(ctx, pal.light, 13, 0, 2, barrel - 1);
-    this.px(ctx, pal.dark, 11, 0, 6, 2);
-    if (level >= 2) {
-      this.px(ctx, pal.light, 11, 0, 6, 2);
-      this.px(ctx, pal.body, 12, 2, 4, 2);
+    const barrel = level >= 4 ? 13 : (level >= 2 ? 12 : 10);
+    if (level >= 4) {
+      this.px(ctx, pal.dark, 8, 0, 3, barrel);
+      this.px(ctx, pal.light, 9, 0, 1, barrel - 1);
+      this.px(ctx, pal.dark, 17, 0, 3, barrel);
+      this.px(ctx, pal.light, 18, 0, 1, barrel - 1);
+      this.px(ctx, pal.light, 7, 0, 5, 2);
+      this.px(ctx, pal.light, 16, 0, 5, 2);
+    } else {
+      this.px(ctx, pal.dark, 12, 0, 4, barrel);
+      this.px(ctx, pal.light, 13, 0, 2, barrel - 1);
+      this.px(ctx, pal.dark, 11, 0, 6, 2);
+      if (level >= 2) {
+        this.px(ctx, pal.light, 11, 0, 6, 2);
+        this.px(ctx, pal.body, 12, 2, 4, 2);
+      }
     }
     this.px(ctx, pal.light, 13, 8, 2, 2);
   },
@@ -418,23 +467,94 @@ SR.Render = {
     this.px(ctx, pal.dark, 13, 8, 2, 2);
   },
 
+  drawSapper: function (ctx, pal) {
+    this.drawTracks(ctx, 1, 4, 21, false);
+    for (let i = 0; i < 5; i++) {
+      const wy = 5 + i * 4;
+      this.px(ctx, SR.PALETTE.wheel, 2, wy, 3, 3);
+      this.px(ctx, SR.PALETTE.wheel, 23, wy, 3, 3);
+    }
+    this.px(ctx, pal.body, 6, 9, 16, 15);
+    this.px(ctx, pal.dark, 6, 9, 16, 2);
+    this.px(ctx, pal.light, 8, 12, 12, 3);
+    this.px(ctx, pal.body, 9, 8, 10, 8);
+    this.px(ctx, "#d8d0b8", 12, 1, 4, 9);
+    this.px(ctx, pal.dark, 11, 1, 6, 2);
+    this.px(ctx, pal.light, 10, 16, 8, 3);
+    this.px(ctx, "#2a2412", 13, 18, 2, 4);
+  },
+
+  drawCommander: function (ctx, pal) {
+    this.drawTracks(ctx, 0, 2, 25, true);
+    for (let i = 0; i < 4; i++) {
+      const wy = 4 + i * 5;
+      this.px(ctx, SR.PALETTE.wheel, 1, wy, 5, 4);
+      this.px(ctx, SR.PALETTE.wheel, 22, wy, 5, 4);
+    }
+    this.px(ctx, pal.body, 5, 8, 18, 16);
+    this.px(ctx, pal.light, 6, 9, 16, 3);
+    this.px(ctx, pal.dark, 7, 13, 14, 6);
+    this.px(ctx, pal.light, 8, 6, 12, 4);
+    this.px(ctx, pal.light, 4, 12, 2, 8);
+    this.px(ctx, pal.light, 22, 12, 2, 8);
+    this.px(ctx, pal.dark, 11, 0, 6, 8);
+    this.px(ctx, pal.light, 12, 0, 4, 7);
+    this.px(ctx, pal.light, 10, 0, 8, 2);
+    this.px(ctx, "#fff4b0", 13, 10, 2, 2);
+  },
+
   drawBullets: function (ctx, bullets) {
     for (let i = 0; i < bullets.length; i++) {
       const b = bullets[i];
-      ctx.fillStyle = b.damage > 1 ? "#f4c430" : (b.size > 6 ? "#fff6c8" : SR.PALETTE.bullet);
+      ctx.fillStyle = b.pierce > 0 || b.damage > 1 ? "#f4c430" : (b.size > 6 ? "#fff6c8" : SR.PALETTE.bullet);
       ctx.fillRect(Math.round(b.x), Math.round(b.y), b.size, b.size);
     }
+  },
+
+  drawDust: function (ctx, dust) {
+    if (!dust) return;
+    for (let i = 0; i < dust.length; i++) {
+      const d = dust[i];
+      const k = 1 - d.t / d.duration;
+      ctx.fillStyle = d.turbo ? "rgba(210, 190, 120, " + (0.45 * k) + ")" : "rgba(40, 36, 24, " + (0.4 * k) + ")";
+      ctx.fillRect(Math.round(d.x), Math.round(d.y), d.turbo ? 3 : 2, d.turbo ? 3 : 2);
+    }
+  },
+
+  drawSparks: function (ctx, sparks) {
+    if (!sparks) return;
+    for (let i = 0; i < sparks.length; i++) {
+      const s = sparks[i];
+      const k = 1 - s.t / s.duration;
+      let color = "#fff8d0";
+      if (s.kind === "brick") color = "#e08a4a";
+      else if (s.kind === "steel") color = "#c8d4e0";
+      else if (s.kind === "water") color = "#7ec8e8";
+      else if (s.kind === "tank") color = "#f4c430";
+      ctx.fillStyle = color;
+      ctx.globalAlpha = k;
+      ctx.fillRect(Math.round(s.x) - 2, Math.round(s.y) - 2, 4, 4);
+      ctx.fillRect(Math.round(s.x) - 5, Math.round(s.y), 10, 2);
+      ctx.fillRect(Math.round(s.x), Math.round(s.y) - 5, 2, 10);
+    }
+    ctx.globalAlpha = 1;
   },
 
   drawExplosions: function (ctx, explosions) {
     for (let i = 0; i < explosions.length; i++) {
       const e = explosions[i];
-      const k = e.t / e.duration;
-      const r = (e.big ? 10 : 6) + k * (e.big ? 18 : 12);
-      ctx.fillStyle = k < 0.35 ? SR.PALETTE.explosionHot : (k < 0.7 ? SR.PALETTE.explosion : SR.PALETTE.explosionRed);
-      ctx.fillRect(e.x - r, e.y - r / 2, r * 2, r);
-      ctx.fillRect(e.x - r / 2, e.y - r, r, r * 2);
-      ctx.fillRect(e.x - 3, e.y - 3, 6, 6);
+      const frame = e.t < e.duration * 0.33 ? 0 : (e.t < e.duration * 0.66 ? 1 : 2);
+      const r = (e.big ? 8 : 5) + frame * (e.big ? 6 : 4);
+      if (frame === 0) ctx.fillStyle = SR.PALETTE.explosionHot;
+      else if (frame === 1) ctx.fillStyle = SR.PALETTE.explosion;
+      else ctx.fillStyle = SR.PALETTE.explosionRed;
+      ctx.fillRect(e.x - r, e.y - 2, r * 2, 4);
+      ctx.fillRect(e.x - 2, e.y - r, 4, r * 2);
+      if (frame < 2) ctx.fillRect(e.x - r / 2, e.y - r / 2, r, r);
+      if (frame === 0) {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(e.x - 2, e.y - 2, 4, 4);
+      }
     }
   }
 };

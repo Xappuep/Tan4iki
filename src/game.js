@@ -19,7 +19,11 @@ SR.Game.prototype.resetWorld = function () {
   this.bullets = [];
   this.bonuses = [];
   this.explosions = [];
+  this.floats = [];
+  this.dust = [];
+  this.sparks = [];
   this.score = 0;
+  this.killed = 0;
   this.lives = SR.CONST.PLAYER_LIVES;
   this.remaining = SR.CONST.TOTAL_ENEMIES;
   this.spawnQueue = this.buildQueue();
@@ -32,15 +36,17 @@ SR.Game.prototype.resetWorld = function () {
   this.freezeLeft = 0;
   this.baseMaxHp = 2;
   this.baseHp = 2;
-  this.floats = [];
+  this.baseGlow = 0;
+  this.empRing = null;
+  this.bonusHistory = [];
 };
 
 SR.Game.prototype.buildQueue = function () {
   return [
-    "basic", "basic", "fast", "basic",
-    "fast", "heavy", "basic", "fast",
-    "basic", "heavy", "fast", "basic",
-    "fast", "heavy", "basic", "fast"
+    "basic", "basic", "fast", "sapper",
+    "fast", "basic", "heavy", "fast",
+    "basic", "sapper", "fast", "basic",
+    "heavy", "commander", "fast", "basic"
   ];
 };
 
@@ -48,6 +54,15 @@ SR.Game.prototype.allTanks = function () {
   const list = this.enemies.slice();
   if (this.player && !this.player.dead) list.push(this.player);
   return list;
+};
+
+SR.Game.prototype.specialCount = function () {
+  let n = 0;
+  for (let i = 0; i < this.enemies.length; i++) {
+    const kind = this.enemies[i].kind;
+    if (kind === "heavy" || kind === "sapper" || kind === "commander") n += 1;
+  }
+  return n;
 };
 
 SR.Game.prototype.start = function () {
@@ -64,8 +79,21 @@ SR.Game.prototype.start = function () {
 
 SR.Game.prototype.stop = function () {
   this.state = "menu";
+  this.clearTemps();
   SR.Audio.setEngine(false);
   SR.Audio.playTheme();
+};
+
+SR.Game.prototype.clearTemps = function () {
+  this.freezeLeft = 0;
+  this.baseGlow = 0;
+  this.empRing = null;
+  this.bonuses = [];
+  this.floats = [];
+  this.dust = [];
+  this.sparks = [];
+  this.explosions = [];
+  this.bullets = [];
 };
 
 SR.Game.prototype.spawnPlayer = function () {
@@ -86,7 +114,10 @@ SR.Game.prototype.spawnPlayer = function () {
 SR.Game.prototype.trySpawnEnemies = function (initial) {
   const max = initial ? 3 : SR.CONST.MAX_ENEMIES;
   while (this.enemies.length < max && this.spawnQueue.length > 0) {
-    if (!this.placeEnemy(this.spawnQueue[0])) break;
+    const kind = this.spawnQueue[0];
+    const special = kind === "heavy" || kind === "sapper" || kind === "commander";
+    if (special && this.specialCount() >= 2) break;
+    if (!this.placeEnemy(kind)) break;
     this.spawnQueue.shift();
   }
 };
@@ -133,11 +164,9 @@ SR.Game.prototype.update = function (dt) {
     return;
   }
   SR.Bonuses.update(this, dt);
-
-  for (let i = this.explosions.length - 1; i >= 0; i--) {
-    this.explosions[i].t += dt;
-    if (this.explosions[i].t >= this.explosions[i].duration) this.explosions.splice(i, 1);
-  }
+  this.tickFx(this.explosions, dt);
+  this.tickFx(this.dust, dt);
+  this.tickFx(this.sparks, dt);
 
   this.enemies = this.enemies.filter(function (e) { return !e.dead; });
   this.bullets = this.bullets.filter(function (b) { return b.alive; });
@@ -157,6 +186,13 @@ SR.Game.prototype.update = function (dt) {
   this.updateHud();
 };
 
+SR.Game.prototype.tickFx = function (list, dt) {
+  for (let i = list.length - 1; i >= 0; i--) {
+    list[i].t += dt;
+    if (list[i].t >= list[i].duration) list.splice(i, 1);
+  }
+};
+
 SR.Game.prototype.resolveBullets = function () {
   for (let i = 0; i < this.bullets.length; i++) {
     const bullet = this.bullets[i];
@@ -174,21 +210,31 @@ SR.Game.prototype.hitTiles = function (bullet) {
   const cy = bullet.y + bullet.size / 2;
   const cell = SR.Map.tileAtPixel(this.grid, cx, cy);
   if (!cell) return;
-  if (cell.type === SR.TILE.BRICK) {
-    this.grid[cell.r][cell.c] = SR.TILE.EMPTY;
-    bullet.alive = false;
-    SR.Audio.hit();
-    this.addExplosion(cx, cy, false);
+  if (cell.type === SR.TILE.WATER && !bullet.splashed) {
+    bullet.splashed = true;
+    this.addSpark(cx, cy, "water");
+    return;
+  }
+    if (cell.type === SR.TILE.BRICK) {
+      this.grid[cell.r][cell.c] = SR.TILE.EMPTY;
+      this.addExplosion(cx, cy, false, "brick");
+      this.addSpark(cx, cy, "brick");
+      SR.Audio.hit();
+      // Уровень 4: снаряд может пройти сквозь один кирпич, не меняя размер коллизии танка.
+      if (bullet.pierce > 0) bullet.pierce -= 1;
+      else bullet.alive = false;
   } else if (cell.type === SR.TILE.STEEL) {
     if (bullet.strong) {
       this.grid[cell.r][cell.c] = SR.TILE.EMPTY;
-      this.addExplosion(cx, cy, false);
+      this.addExplosion(cx, cy, false, "steel");
     }
+    this.addSpark(cx, cy, "steel");
     bullet.alive = false;
     SR.Audio.hit();
   } else if (cell.type === SR.TILE.BASE) {
     bullet.alive = false;
-    this.addExplosion(cx, cy, true);
+    this.addExplosion(cx, cy, true, "tank");
+    this.addSpark(cx, cy, "brick");
     this.baseHp -= 1;
     SR.Audio.hit();
     if (this.baseHp <= 0) this.finish("lose", "Штаб уничтожен");
@@ -204,6 +250,7 @@ SR.Game.prototype.hitTanks = function (bullet) {
     if (friendly) continue;
     if (!SR.Collision.rects(bullet.rect(), SR.Collision.tankRect(tank.x, tank.y))) continue;
     bullet.alive = false;
+    this.addSpark(bullet.x + bullet.size / 2, bullet.y + bullet.size / 2, "tank");
     if (tank.isProtected && tank.isProtected()) {
       SR.Audio.hit();
       return;
@@ -214,8 +261,8 @@ SR.Game.prototype.hitTanks = function (bullet) {
     }
     if (tank.shieldCharges > 0) {
       tank.shieldCharges -= 1;
-      tank.flash = 180;
-      SR.Audio.hit();
+      tank.flash = 220;
+      SR.Audio.shield();
       return;
     }
     tank.hp -= (bullet.damage || 1);
@@ -233,6 +280,7 @@ SR.Game.prototype.hitOtherBullets = function (bullet) {
     if (SR.Collision.rects(bullet.rect(), other.rect())) {
       bullet.alive = false;
       other.alive = false;
+      this.addSpark(bullet.x, bullet.y, "steel");
     }
   }
 };
@@ -242,21 +290,57 @@ SR.Game.prototype.destroyTank = function (tank) {
   tank.dead = true;
   const cx = tank.x + SR.CONST.TANK / 2;
   const cy = tank.y + SR.CONST.TANK / 2;
-  this.addExplosion(cx, cy, tank.id !== "player");
+  this.addExplosion(cx, cy, tank.id !== "player", "tank");
   SR.Audio.boom();
   if (tank.id === "player") {
     this.lives -= 1;
     this.respawnWait = 900;
+    if (this.player) {
+      this.player.speedBoost = 0;
+      this.player.shieldCharges = 0;
+    }
     if (this.lives <= 0) this.finish("lose", "Машины резерва кончились");
     return;
   }
   this.remaining -= 1;
+  this.killed += 1;
   this.score += tank.score;
-  SR.Bonuses.tryDrop(this, cx, cy);
+  if (tank.kind === "commander") {
+    SR.Bonuses.tryDrop(this, cx, cy, { force: true, type: "power" });
+  } else {
+    SR.Bonuses.tryDrop(this, cx, cy);
+  }
 };
 
-SR.Game.prototype.addExplosion = function (x, y, big) {
-  this.explosions.push({ x: x, y: y, t: 0, duration: big ? 420 : 260, big: big });
+SR.Game.prototype.addExplosion = function (x, y, big, kind) {
+  this.explosions.push({
+    x: x,
+    y: y,
+    t: 0,
+    duration: big ? 360 : 220,
+    big: big,
+    kind: kind || "tank"
+  });
+};
+
+SR.Game.prototype.addSpark = function (x, y, kind) {
+  this.sparks.push({ x: x, y: y, t: 0, duration: 140, kind: kind || "tank" });
+};
+
+SR.Game.prototype.addDust = function (tank) {
+  const rear = SR.dirOffset(tank.dir, -10);
+  const turbo = tank.speedBoost > 0;
+  const exhaust = (tank.tankLevel || 1) >= 3;
+  if (!turbo && !exhaust) return;
+  this.dust.push({
+    x: tank.x + SR.CONST.TANK / 2 + rear.x + (Math.random() * 4 - 2),
+    y: tank.y + SR.CONST.TANK / 2 + rear.y + (Math.random() * 4 - 2),
+    t: 0,
+    duration: turbo ? 280 : 180,
+    turbo: turbo,
+    exhaust: exhaust
+  });
+  if (this.dust.length > 32) this.dust.shift();
 };
 
 SR.Game.prototype.checkEnd = function () {
@@ -271,6 +355,7 @@ SR.Game.prototype.finish = function (result, text) {
   this.ended = true;
   this.state = result;
   this.status = result === "win" ? "Победа" : "Поражение";
+  this.clearTemps();
   SR.Audio.setEngine(false);
   if (result === "win") SR.Audio.win();
   else SR.Audio.lose();
@@ -298,7 +383,8 @@ SR.Game.prototype.updateHud = function () {
   if (!this.hud) return;
   this.hud.score.textContent = String(this.score);
   this.hud.best.textContent = String(Math.max(this.score, SR.Game.loadBest()));
-  this.hud.enemies.textContent = String(this.remaining);
+  if (this.hud.killed) this.hud.killed.textContent = String(this.killed || 0);
+  if (this.hud.enemies) this.hud.enemies.textContent = String(this.remaining);
   this.hud.status.textContent = this.status;
   this.hud.lives.innerHTML = "";
   const n = Math.max(0, this.lives);
@@ -311,15 +397,15 @@ SR.Game.prototype.updateHud = function () {
   if (this.hud.tankLevel) this.hud.tankLevel.textContent = String(level);
   if (this.hud.tankBars) {
     const cells = [];
-    for (let i = 1; i <= 3; i++) cells.push(i <= level ? "■" : "□");
+    for (let i = 1; i <= 4; i++) cells.push(i <= level ? "■" : "□");
     this.hud.tankBars.textContent = cells.join(" ");
   }
+  const p = this.player;
+  if (this.hud.shield) this.hud.shield.textContent = String(p && !p.dead ? p.shieldCharges : 0);
   if (this.hud.effects) {
     const bits = [];
-    const p = this.player;
-    if (p && p.shieldCharges > 0) bits.push("Щит ×" + p.shieldCharges);
-    if (p && p.speedBoost > 0) bits.push("Скорость " + Math.ceil(p.speedBoost / 1000) + "с");
-    if (this.freezeLeft > 0) bits.push("Стужа " + Math.ceil(this.freezeLeft / 1000) + "с");
+    if (p && !p.dead && p.speedBoost > 0) bits.push("Скорость " + Math.ceil(p.speedBoost / 1000) + "с");
+    if (this.freezeLeft > 0) bits.push("Стоп " + Math.ceil(this.freezeLeft / 1000) + "с");
     if (this.baseHp < this.baseMaxHp && this.baseHp > 0) bits.push("Штаб повреждён");
     this.hud.effects.textContent = bits.length ? bits.join(" · ") : "Нет";
   }
@@ -342,3 +428,4 @@ SR.Game.prototype.loop = function () {
   this.lastTime = 0;
   this.raf = requestAnimationFrame(this.frame.bind(this));
 };
+
