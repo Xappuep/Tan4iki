@@ -2,10 +2,10 @@ window.SR = window.SR || {};
 
 SR.main = function () {
   const canvas = document.getElementById("game");
-  const menu = document.getElementById("menu");
+  const app = document.getElementById("app");
   const end = document.getElementById("end");
-  const menuBest = document.getElementById("menu-best");
   const hudBest = document.getElementById("best");
+  const touch = document.getElementById("touch");
 
   const game = new SR.Game(canvas, {
     score: document.getElementById("score"),
@@ -20,35 +20,43 @@ SR.main = function () {
     killed: document.getElementById("killed")
   });
 
+  function setPregame(on) {
+    if (on) app.classList.add("pregame");
+    else app.classList.remove("pregame");
+    if (touch) {
+      if (on) touch.classList.add("hidden");
+      else touch.classList.remove("hidden");
+    }
+  }
+
   function showBest() {
-    const best = SR.Game.loadBest();
-    menuBest.textContent = String(best);
-    hudBest.textContent = String(best);
+    hudBest.textContent = String(SR.Game.loadBest());
   }
 
   function unlockAudio() {
     SR.Audio.init();
-    if (game.state === "menu") SR.Audio.playTheme();
   }
-
-  window.addEventListener("pointerdown", unlockAudio);
-  window.addEventListener("keydown", unlockAudio);
 
   function showMenu() {
     game.stop();
     end.classList.add("hidden");
-    menu.classList.remove("hidden");
+    setPregame(true);
     showBest();
-    SR.Audio.playTheme();
+    SR.Title.showMenu();
   }
 
   function startGame() {
     SR.Audio.init();
+    SR.Title.close();
     SR.Audio.stopTheme();
-    menu.classList.add("hidden");
     end.classList.add("hidden");
+    setPregame(false);
+    game.input.dir = null;
+    game.input.fire = false;
     game.start();
   }
+
+  SR.Title.onStart = startGame;
 
   game.onEnd = function (result, text, score) {
     document.getElementById("end-title").textContent = result === "win" ? "Победа" : "Поражение";
@@ -58,7 +66,6 @@ SR.main = function () {
     showBest();
   };
 
-  document.getElementById("btn-start").addEventListener("click", startGame);
   document.getElementById("btn-again").addEventListener("click", startGame);
   document.getElementById("btn-menu").addEventListener("click", showMenu);
 
@@ -112,6 +119,11 @@ SR.main = function () {
   }
 
   window.addEventListener("keydown", function (event) {
+    unlockAudio();
+    if (SR.Title.active()) {
+      SR.Title.handleKey(event);
+      return;
+    }
     if (event.code === "Space" || event.key === " ") {
       event.preventDefault();
       game.input.fire = true;
@@ -124,11 +136,22 @@ SR.main = function () {
   });
 
   window.addEventListener("keyup", function (event) {
+    if (SR.Title.active()) return;
     if (event.code === "Space" || event.key === " ") {
       game.input.fire = false;
       return;
     }
     releaseToken(tokenFromEvent(event));
+  });
+
+  window.addEventListener("pointerdown", function (event) {
+    unlockAudio();
+    if (!SR.Title.active()) return;
+    SR.Title.handlePointer(canvas, event);
+  });
+
+  canvas.addEventListener("pointermove", function (event) {
+    if (SR.Title.active()) SR.Title.handleMove(canvas, event);
   });
 
   function bindHold(el, on, off) {
@@ -163,6 +186,8 @@ SR.main = function () {
   });
 
   showBest();
+  setPregame(true);
+  SR.Title.begin();
   SR.session = game;
   game.loop();
 };

@@ -22,7 +22,30 @@ SR.Audio = {
     131, 131, 117, 0, 98, 98, 87, 0, 98, 98, 98, 0, 131, 131, 131, 0
   ],
 
+  enabled: true,
+  SOUND_KEY: "steelFrontiersSound",
+
+  loadMute: function () {
+    try {
+      const v = localStorage.getItem(this.SOUND_KEY);
+      if (v === "0") this.enabled = false;
+      if (v === "1") this.enabled = true;
+    } catch (err) {}
+  },
+
+  setEnabled: function (on) {
+    this.enabled = !!on;
+    try {
+      localStorage.setItem(this.SOUND_KEY, this.enabled ? "1" : "0");
+    } catch (err) {}
+    if (!this.enabled) {
+      this.stopTheme();
+      this.setEngine(false);
+    }
+  },
+
   init: function () {
+    this.loadMute();
     if (this.ctx) {
       if (this.ctx.state === "suspended") this.ctx.resume();
       return;
@@ -37,7 +60,7 @@ SR.Audio = {
   },
 
   tone: function (freq, duration, type, gain, slide) {
-    if (!this.ctx || !freq) return;
+    if (!this.enabled || !this.ctx || !freq) return;
     const t = this.now();
     const osc = this.ctx.createOscillator();
     const amp = this.ctx.createGain();
@@ -52,7 +75,7 @@ SR.Audio = {
   },
 
   noise: function (duration, gain) {
-    if (!this.ctx) return;
+    if (!this.enabled || !this.ctx) return;
     const t = this.now();
     const length = Math.floor(this.ctx.sampleRate * duration);
     const buffer = this.ctx.createBuffer(1, length, this.ctx.sampleRate);
@@ -73,7 +96,7 @@ SR.Audio = {
 
   playTheme: function () {
     this.init();
-    if (!this.ctx || this.themePlaying) return;
+    if (!this.enabled || !this.ctx || this.themePlaying) return;
     this.themePlaying = true;
     this.themeStep = 0;
     this.themeNext = this.now() + 0.02;
@@ -81,7 +104,7 @@ SR.Audio = {
   },
 
   tickTheme: function () {
-    if (!this.themePlaying || !this.ctx) return;
+    if (!this.themePlaying || !this.ctx || !this.enabled) return;
     const step = 0.18;
     while (this.themeNext < this.now() + 0.22) {
       const i = this.themeStep % this.THEME.length;
@@ -152,10 +175,17 @@ SR.Audio = {
   setEngine: function (on) {
     this.ensureEngine();
     if (!this.engine) return;
+    if (!this.enabled) on = false;
     const t = this.now();
     this.engine.master.gain.cancelScheduledValues(t);
     this.engine.master.gain.setTargetAtTime(on ? 0.05 : 0.0001, t, 0.05);
     this.engine.osc.frequency.setTargetAtTime(on ? 72 : 48, t, 0.08);
+  },
+
+  alarm: function () {
+    this.tone(620, 0.11, "square", 0.035);
+    const self = this;
+    setTimeout(function () { self.tone(510, 0.14, "square", 0.03); }, 170);
   },
 
   shot: function () {

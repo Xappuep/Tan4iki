@@ -415,8 +415,13 @@ SR.Game.prototype.frame = function (time) {
   const dt = this.lastTime ? Math.min(32, time - this.lastTime) : 16;
   this.lastTime = time;
   try {
-    if (this.state === "playing") this.update(dt);
-    SR.Render.draw(this.ctx, this, time);
+    if (SR.Title && SR.Title.active()) {
+      SR.Title.update(dt);
+      SR.Title.draw(this.ctx, time);
+    } else {
+      if (this.state === "playing") this.update(dt);
+      SR.Render.draw(this.ctx, this, time);
+    }
   } catch (err) {
     console.error(err);
   }
